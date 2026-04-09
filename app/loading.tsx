@@ -1,25 +1,23 @@
 export default function Loading() {
   return (
-    <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-gradient-to-br from-white via-gray-50 to-white z-[100] flex items-center justify-center transition-opacity duration-500">
       <div className="flex flex-col items-center">
-        {/* Logo Area */}
-        <div className="mb-8 animate-pulse">
-          <div className="flex flex-col items-center">
-            <span className="text-4xl font-serif text-forest-600 tracking-wider mb-2">VERDE</span>
-            <span className="text-sm text-gold-500 tracking-widest italic">by RENZO</span>
-          </div>
+        {/* Logo */}
+        <div className="relative w-48 h-20 mb-8 animate-fade-in">
+          <img
+            src="/images/verde-logo.png"
+            alt="Verde by Renzo"
+            style={{ objectFit: 'contain', width: '100%', height: '100%' }}
+          />
         </div>
-        
-        {/* Elegant Spinner */}
-        <div className="relative w-16 h-16">
-          {/* Outer ring */}
-          <div className="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
-          {/* Animated ring */}
-          <div className="absolute inset-0 border-4 border-transparent border-t-forest-600 border-r-gold-500 rounded-full animate-spin"></div>
+        {/* Elegant progress bar */}
+        <div className="w-64 h-1 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-forest-600 to-gold-500 animate-loading-bar"></div>
         </div>
-        
-        {/* Loading text */}
-        <p className="mt-6 text-gray-500 text-sm tracking-wider animate-pulse">Loading...</p>
+        {/* Tagline */}
+        <p className="mt-6 text-gray-500 text-sm tracking-wider animate-pulse">
+          Every detail. Every swing. Elevated.
+        </p>
       </div>
     </div>
   )
