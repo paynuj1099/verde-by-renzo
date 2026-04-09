@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, Montserrat } from 'next/font/google'
 import './globals.css'
 
@@ -14,16 +14,17 @@ const montserrat = Montserrat({
   display: 'swap',
 })
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+}
+
 export const metadata: Metadata = {
   title: 'Verde by Renzo',
   description: 'Elevate every moment with Verde by Renzo premium performance polo shirts designed for the modern golfer.',
   icons: {
     icon: '/favicon.ico',
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
   },
 }
 
