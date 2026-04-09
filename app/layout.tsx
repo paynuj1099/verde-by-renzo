@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Playfair_Display, Montserrat } from 'next/font/google'
+import LoadingScreen from '@/components/LoadingScreen'
 import './globals.css'
 
 const playfair = Playfair_Display({
@@ -17,6 +18,9 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: 'Verde by Renzo',
   description: 'Elevate every moment with Verde by Renzo premium performance polo shirts designed for the modern golfer.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({
@@ -26,7 +30,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${playfair.variable} ${montserrat.variable}`}>
-      <body className={montserrat.className}>{children}</body>
+      <body className={montserrat.className}>
+        <LoadingScreen />
+        {children}
+      </body>
     </html>
   )
 }
