@@ -14,6 +14,7 @@ export default function Footer() {
                   src="/images/verde-logo.png"
                   alt="Verde by Renzo Logo"
                   fill
+                  sizes="224px"
                   className="object-contain object-left"
                   priority
                 />

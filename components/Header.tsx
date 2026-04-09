@@ -68,6 +68,7 @@ export default function Header() {
                 src="/images/verde-logo.png"
                 alt="Verde by Renzo"
                 fill
+                sizes="(max-width: 640px) 96px, (max-width: 1024px) 112px, 144px"
                 className="object-contain"
                 priority
               />

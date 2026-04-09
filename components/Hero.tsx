@@ -12,6 +12,7 @@ export default function Hero() {
           src="/images/hero-background.png"
           alt="Verde by Renzo Premium Performance Polo"
           fill
+          sizes="100vw"
           className="object-cover object-top"
           priority
           quality={95}
