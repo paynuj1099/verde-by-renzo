@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, Montserrat } from 'next/font/google'
 import './globals.css'
+import InitialLoader from '@/components/InitialLoader'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -36,7 +37,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${montserrat.variable}`}>
       <body className={montserrat.className}>
-        {children}
+        <InitialLoader>
+          {children}
+        </InitialLoader>
       </body>
     </html>
   )

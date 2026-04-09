@@ -30,23 +30,20 @@
     }
   }
 
-  @keyframes loading-bar {
-    0% {
-      width: 0%;
-    }
-    50% {
-      width: 70%;
-    }
-    100% {
-      width: 100%;
-    }
-  }
-
   .animate-fade-in {
     animation: fade-in 1s ease-out;
   }
 
-  .animate-loading-bar {
-    animation: loading-bar 2s ease-in-out forwards;
+  @keyframes loading-progress {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-loading-progress {
+    animation: loading-progress 1.5s ease-in-out infinite;
   }
 }
