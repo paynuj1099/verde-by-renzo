@@ -42,12 +42,45 @@ verde-by-renzo/
    npm install
    ```
 
-2. Run the development server:
+2. Set up environment variables:
+   - Copy `.env.local.example` to `.env.local`
+   - Add your Google OAuth credentials (see Google OAuth Setup below)
+
+3. Run the development server:
    ```bash
    npm run dev
    ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+## Google OAuth Setup
+
+To enable Google login functionality:
+
+1. **Create a Google Cloud Project**:
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select an existing one
+
+2. **Enable Google OAuth API**:
+   - Navigate to "APIs & Services" > "Library"
+   - Search for "Google+ API" and enable it
+
+3. **Create OAuth Credentials**:
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth 2.0 Client ID"
+   - Select "Web application"
+   - Add authorized redirect URIs:
+     - `http://localhost:3000/api/auth/google/callback` (for development)
+     - `https://yourdomain.com/api/auth/google/callback` (for production)
+   - Click "Create"
+
+4. **Add Credentials to .env.local**:
+   ```bash
+   NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_client_id_here
+   GOOGLE_CLIENT_SECRET=your_client_secret_here
+   ```
+
+5. **Restart your development server**
 
 ## Adding Images
 
@@ -81,7 +114,13 @@ npm start
 - ✅ Product showcase with category filtering
 - ✅ Promotional banner sections
 - ✅ Newsletter subscription
-- ✅ Shopping cart integration (UI ready)
+- ✅ Shopping cart integration
+- ✅ Wishlist functionality
+- ✅ Blog page with articles
+- ✅ Contact page
+- ✅ User authentication (Login with Google OAuth)
+- ✅ Password reset functionality
+- ✅ Search modal with product filtering
 - ✅ Smooth animations and transitions
 - ✅ TypeScript for type safety
 - ✅ SEO-friendly structure

@@ -1,5 +1,6 @@
 import { Mail, Instagram, Facebook, Twitter, Linkedin } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export default function Footer() {
   return (
@@ -61,21 +62,21 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4 text-white uppercase tracking-wider text-xs sm:text-sm">Quick Links</h3>
             <ul className="space-y-3 text-sm">
-              <li><a href="#" className="text-gray-400 hover:text-gold-500 transition-colors">About Us</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-gold-500 transition-colors">Shop</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-gold-500 transition-colors">Contact</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-gold-500 transition-colors">Blog</a></li>
+              <li><Link href="/shop" className="text-gray-400 hover:text-gold-500 transition-colors">Shop</Link></li>
+              <li><Link href="/blog" className="text-gray-400 hover:text-gold-500 transition-colors">Blog</Link></li>
+              <li><Link href="/contact-us" className="text-gray-400 hover:text-gold-500 transition-colors">Contact</Link></li>
+              <li><Link href="/wishlist" className="text-gray-400 hover:text-gold-500 transition-colors">Wishlist</Link></li>
             </ul>
           </div>
 
           {/* Customer Service */}
           <div>
-            <h3 className="font-semibold mb-4 text-white uppercase tracking-wider text-xs sm:text-sm">Customer Service</h3>
+            <h3 className="font-semibold mb-4 text-white uppercase tracking-wider text-xs sm:text-sm">Legal</h3>
             <ul className="space-y-3 text-sm">
-              <li><a href="#" className="text-gray-400 hover:text-gold-500 transition-colors">Shipping Info</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-gold-500 transition-colors">Returns</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-gold-500 transition-colors">Size Guide</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-gold-500 transition-colors">FAQ</a></li>
+              <li><Link href="/terms" className="text-gray-400 hover:text-gold-500 transition-colors">Terms & Conditions</Link></li>
+              <li><Link href="/privacy" className="text-gray-400 hover:text-gold-500 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/contact-us" className="text-gray-400 hover:text-gold-500 transition-colors">Returns & Refunds</Link></li>
+              <li><Link href="/contact-us" className="text-gray-400 hover:text-gold-500 transition-colors">Shipping Info</Link></li>
             </ul>
           </div>
 
@@ -104,8 +105,21 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 mt-10 sm:mt-12 pt-6 sm:pt-8 text-center text-xs sm:text-sm text-gray-500">
-          <p>&copy; 2026 Verde by Renzo. All rights reserved.</p>
+        <div className="border-t border-white/10 mt-10 sm:mt-12 pt-6 sm:pt-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-xs sm:text-sm text-gray-500">
+              &copy; 2026 Verde by Renzo. All rights reserved.
+            </p>
+            <div className="flex gap-4 text-xs sm:text-sm">
+              <Link href="/terms" className="text-gray-500 hover:text-gold-500 transition-colors">
+                Terms
+              </Link>
+              <span className="text-gray-600">•</span>
+              <Link href="/privacy" className="text-gray-500 hover:text-gold-500 transition-colors">
+                Privacy
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

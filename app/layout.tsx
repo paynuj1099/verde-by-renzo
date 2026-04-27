@@ -1,7 +1,13 @@
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, Montserrat } from 'next/font/google'
 import './globals.css'
+
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
+import Chatbot from '@/components/Chatbot'
 import InitialLoader from '@/components/InitialLoader'
+import { CartProvider } from '@/context/CartContext'
+import { WishlistProvider } from '@/context/WishlistContext'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -37,9 +43,16 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${montserrat.variable}`}>
       <body className={montserrat.className}>
-        <InitialLoader>
-          {children}
-        </InitialLoader>
+        <WishlistProvider>
+          <CartProvider>
+            <InitialLoader>
+              <Header />
+              {children}
+              <Footer />
+              <Chatbot />
+            </InitialLoader>
+          </CartProvider>
+        </WishlistProvider>
       </body>
     </html>
   )
