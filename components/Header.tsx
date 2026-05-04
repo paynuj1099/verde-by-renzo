@@ -64,7 +64,7 @@ export default function Header() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className={`lg:hidden p-2 ${isScrolled ? 'text-gray-700' : 'text-white'}`}
+            className={`lg:hidden p-2 text-gray-700`}
             aria-label="Toggle menu"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -127,30 +127,30 @@ export default function Header() {
         {isMenuOpen && (
           <nav className="lg:hidden py-4 bg-white/95 backdrop-blur-md rounded-b-lg shadow-lg">
             <div className="flex flex-col space-y-4">
-              <Link href="/" className="text-gray-700 hover:text-forest-600 transition-colors px-2">
+              <Link href="/" className="text-gray-700 hover:text-forest-600 transition-colors px-2" onClick={() => setIsMenuOpen(false)}>
                 Home
               </Link>
-              <Link href="/shop" className="text-gray-700 hover:text-forest-600 transition-colors px-2">
+              <Link href="/shop" className="text-gray-700 hover:text-forest-600 transition-colors px-2" onClick={() => setIsMenuOpen(false)}>
                 Shop
               </Link>
-              <Link href="/blog" className="text-gray-700 hover:text-forest-600 transition-colors px-2">
+              <Link href="/blog" className="text-gray-700 hover:text-forest-600 transition-colors px-2" onClick={() => setIsMenuOpen(false)}>
                 Blog
               </Link>
-              <Link href="/contact-us" className="text-gray-700 hover:text-forest-600 transition-colors px-2">
+              <Link href="/contact-us" className="text-gray-700 hover:text-forest-600 transition-colors px-2" onClick={() => setIsMenuOpen(false)}>
                 Contact Us
               </Link>
               <div className="flex sm:hidden items-center gap-4 px-2 pt-4 border-t border-gray-200">
                 <button 
-                  onClick={() => setIsSearchOpen(true)}
+                  onClick={() => { setIsSearchOpen(true); setIsMenuOpen(false); }}
                   className="text-gray-700 hover:text-forest-600" 
                   aria-label="Search"
                 >
                   <Search size={20} />
                 </button>
-                <Link href="/login" className="text-gray-700 hover:text-forest-600" aria-label="Account">
+                <Link href="/login" className="text-gray-700 hover:text-forest-600" aria-label="Account" onClick={() => setIsMenuOpen(false)}>
                   <User size={20} />
                 </Link>
-                <Link href="/wishlist" className="text-gray-700 hover:text-forest-600 relative" aria-label="Wishlist">
+                <Link href="/wishlist" className="text-gray-700 hover:text-forest-600 relative" aria-label="Wishlist" onClick={() => setIsMenuOpen(false)}>
                   <Heart size={20} />
                   {getWishlistCount() > 0 && (
                     <span className="absolute -top-2 -right-2 bg-gold-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-semibold text-[10px]">

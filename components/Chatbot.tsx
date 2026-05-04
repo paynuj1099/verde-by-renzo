@@ -123,9 +123,9 @@ export default function Chatbot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200">
+        <div className="fixed inset-0 md:bottom-6 md:right-6 md:left-auto md:top-auto md:w-96 md:h-[600px] w-full h-full bg-white md:rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200">
           {/* Header */}
-          <div className="bg-forest-600 text-white p-4 rounded-t-2xl flex items-center justify-between">
+          <div className="bg-forest-600 text-white p-4 md:rounded-t-2xl flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <Bot size={24} />
@@ -197,7 +197,7 @@ export default function Chatbot() {
           )}
 
           {/* Input */}
-          <div className="p-4 border-t border-gray-200 bg-white rounded-b-2xl">
+          <div className="p-4 border-t border-gray-200 bg-white md:rounded-b-2xl">
             <div className="flex gap-2">
               <input
                 ref={inputRef}
