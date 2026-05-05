@@ -64,7 +64,7 @@ export default function Header() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className={`lg:hidden p-2 text-gray-700`}
+            className={`lg:hidden p-2 ${isScrolled || !isHome ? 'text-gray-700' : 'text-white'}`}
             aria-label="Toggle menu"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
