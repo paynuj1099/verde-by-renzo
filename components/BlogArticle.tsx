@@ -13,6 +13,8 @@ import type {
   BlogPost,
 } from '@/lib/blog'
 
+import BlogNewsletter from '@/components/BlogNewsletter'
+
 interface BlogArticleProps {
   post: BlogPost
 }
@@ -221,22 +223,30 @@ export default function BlogArticle({
 
           </div>
 
-          {/* ======================= */}
-          {/* BACK TO JOURNAL */}
-          {/* ======================= */}
+        </div>
 
-          <div className="mt-10 text-center">
+        {/* ======================= */}
+        {/* NEWSLETTER */}
+        {/* ======================= */}
 
-            <Link
-              href="/blog"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 transition-colors hover:text-forest-600"
-            >
-              <ArrowLeft size={16} />
+        <div className="mx-auto max-w-5xl">
+          <BlogNewsletter />
+        </div>
 
-              Back to The Verde Journal
-            </Link>
+        {/* ======================= */}
+        {/* BACK TO JOURNAL */}
+        {/* ======================= */}
 
-          </div>
+        <div className="mx-auto mt-10 max-w-3xl text-center">
+
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 transition-colors hover:text-forest-600"
+          >
+            <ArrowLeft size={16} />
+
+            Back to The Verde Journal
+          </Link>
 
         </div>
 

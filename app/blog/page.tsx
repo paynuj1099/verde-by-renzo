@@ -13,6 +13,8 @@ import {
   getAllBlogPosts,
 } from '@/lib/blog'
 
+import BlogNewsletter from '@/components/BlogNewsletter'
+
 export default function BlogPage() {
   const blogPosts =
     getAllBlogPosts()
@@ -436,45 +438,7 @@ export default function BlogPage() {
         {/* NEWSLETTER */}
         {/* ======================= */}
 
-        <section className="mt-16 rounded-2xl bg-gradient-to-r from-forest-600 to-forest-800 p-8 text-center text-white lg:p-12">
-
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-gold-300">
-            The Verde Journal
-          </p>
-
-          <h2 className="mb-4 font-serif text-3xl font-bold lg:text-4xl">
-            Stay Updated
-          </h2>
-
-          <p className="mx-auto mb-8 max-w-2xl leading-7 text-forest-100">
-            Subscribe to our newsletter and be the first
-            to know about new journal stories, collections,
-            product releases, and exclusive offers.
-          </p>
-
-          <div className="mx-auto flex max-w-md flex-col gap-3 sm:flex-row">
-
-            <input
-              type="email"
-              placeholder="Enter your email"
-              aria-label="Email address"
-              className="flex-1 rounded-full bg-white px-6 py-3 text-gray-900 outline-none transition focus:ring-2 focus:ring-gold-500"
-            />
-
-            <button
-              type="button"
-              className="rounded-full bg-gold-500 px-8 py-3 font-semibold text-white transition-colors hover:bg-gold-600"
-            >
-              Subscribe
-            </button>
-
-          </div>
-
-          <p className="mt-4 text-xs text-white/60">
-            Be the first to hear what&apos;s new at VERDE.
-          </p>
-
-        </section>
+        <BlogNewsletter />
 
       </div>
 
