@@ -248,7 +248,7 @@ export const products: Product[] = [
 
     images: {
       ivory:
-        '/images/leather-golf-glove-ivory.png',
+        '/images/Leather-golf-glove-ivory.png',
     },
 
     /*
@@ -259,7 +259,7 @@ export const products: Product[] = [
      * ivory product render.
      */
     newArrivalImage:
-      '/images/leather-golf-glove.png',
+      '/images/Leather-golf-glove.png',
 
     description:
       'Premium Cabretta leather golf glove designed for superior grip, comfort, and confident performance.',
