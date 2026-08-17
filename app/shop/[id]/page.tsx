@@ -23,11 +23,19 @@ import {
   ShieldCheck,
   ZoomIn,
   ZoomOut,
+  Ruler,
 } from 'lucide-react'
 
 import { products } from '@/data/products'
 import { useCart } from '@/context/CartContext'
 import { useWishlist } from '@/context/WishlistContext'
+
+import {
+  GLOVE_HANDS,
+  GloveHand,
+  getProductSizeOptions,
+  productRequiresGloveHand,
+} from '@/data/productOptions'
 
 export default function ProductDetailPage() {
   const params = useParams<{
@@ -54,6 +62,23 @@ export default function ProductDetailPage() {
   const [
     selectedColor,
     setSelectedColor,
+  ] = useState('')
+
+  const [
+    selectedSize,
+    setSelectedSize,
+  ] = useState('')
+
+  const [
+    selectedHand,
+    setSelectedHand,
+  ] = useState<
+    GloveHand | ''
+  >('')
+
+  const [
+    optionError,
+    setOptionError,
   ] = useState('')
 
   const [
@@ -139,6 +164,17 @@ export default function ProductDetailPage() {
   }, [product, colorFromUrl])
 
   /*
+   * Reset size/hand when moving
+   * between different products.
+   */
+  useEffect(() => {
+    setSelectedSize('')
+    setSelectedHand('')
+    setOptionError('')
+    setAddedToCart(false)
+  }, [product?.id])
+
+  /*
    * Product not found
    */
   if (!product) {
@@ -175,6 +211,32 @@ export default function ProductDetailPage() {
   const currentColor =
     selectedColor ||
     requestedColor
+
+  /*
+   * Dedicated size guide.
+   *
+   * Performance Polo:
+   * /size-guide#performance-polo
+   *
+   * Leather Golf Glove:
+   * /size-guide#golf-glove
+   */
+  const sizeGuideHref =
+    product.id === 1
+      ? '/size-guide#performance-polo'
+      : product.id === 9
+        ? '/size-guide#golf-glove'
+        : null
+
+  const sizeOptions =
+    getProductSizeOptions(
+      product.id
+    )
+
+  const requiresGloveHand =
+    productRequiresGloveHand(
+      product.id
+    )
 
   /*
    * Get image for selected color.
@@ -470,11 +532,35 @@ export default function ProductDetailPage() {
   }
 
   /*
-   * Add selected color
-   * to cart.
+   * Add the exact selected variant
+   * to the cart.
    */
   const handleAddToCart =
     () => {
+      if (
+        sizeOptions.length > 0 &&
+        !selectedSize
+      ) {
+        setOptionError(
+          'Please select a size.'
+        )
+
+        return
+      }
+
+      if (
+        requiresGloveHand &&
+        !selectedHand
+      ) {
+        setOptionError(
+          'Please select which hand the glove will be worn on.'
+        )
+
+        return
+      }
+
+      setOptionError('')
+
       addToCart({
         id: product.id,
         name: product.name,
@@ -484,6 +570,12 @@ export default function ProductDetailPage() {
           product.category,
         color:
           currentColor,
+        size:
+          selectedSize ||
+          undefined,
+        hand:
+          selectedHand ||
+          undefined,
       })
 
       setAddedToCart(
@@ -504,11 +596,13 @@ export default function ProductDetailPage() {
     () => {
       if (
         isInWishlist(
-          product.id
+          product.id,
+          currentColor
         )
       ) {
         removeFromWishlist(
-          product.id
+          product.id,
+          currentColor
         )
 
         return
@@ -740,6 +834,178 @@ export default function ProductDetailPage() {
             </p>
 
             {/* ================= */}
+            {/* SIZE & FIT */}
+            {/* ================= */}
+
+            {sizeGuideHref && (
+              <div className="mb-8 rounded-xl border border-gold-200 bg-gold-50 p-4 sm:p-5">
+
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                  <div>
+
+                    <p className="text-sm font-semibold text-gray-900">
+                      Size &amp; Fit
+                    </p>
+
+                    <p className="mt-1 text-sm leading-6 text-gray-600">
+                      Check the measurements before adding this item to your cart.
+                    </p>
+
+                  </div>
+
+                  <Link
+                    href={
+                      sizeGuideHref
+                    }
+                    className="inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-lg border border-forest-600 bg-white px-4 py-2.5 text-sm font-semibold text-forest-700 transition-colors hover:bg-forest-50"
+                  >
+                    <Ruler
+                      size={17}
+                    />
+
+                    View Size Guide
+                  </Link>
+
+                </div>
+
+              </div>
+            )}
+
+            {/* ================= */}
+            {/* SIZE */}
+            {/* ================= */}
+
+            {sizeOptions.length > 0 && (
+              <div className="mb-8">
+
+                <div className="mb-3 flex items-center justify-between">
+
+                  <span className="text-sm font-semibold text-gray-900">
+                    Select Size
+                  </span>
+
+                  {selectedSize && (
+                    <span className="text-sm text-gray-500">
+                      {selectedSize}
+                    </span>
+                  )}
+
+                </div>
+
+                <div className="flex flex-wrap gap-2.5">
+
+                  {sizeOptions.map(
+                    (size) => (
+                      <button
+                        key={
+                          size
+                        }
+                        type="button"
+                        onClick={
+                          () => {
+                            setSelectedSize(
+                              size
+                            )
+
+                            setOptionError('')
+                          }
+                        }
+                        className={`min-w-12 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-all ${
+                          selectedSize ===
+                          size
+                            ? 'border-forest-600 bg-forest-600 text-white shadow-sm'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-forest-500 hover:text-forest-700'
+                        }`}
+                        aria-pressed={
+                          selectedSize ===
+                          size
+                        }
+                      >
+                        {size}
+                      </button>
+                    )
+                  )}
+
+                </div>
+
+              </div>
+            )}
+
+            {/* ================= */}
+            {/* GLOVE HAND */}
+            {/* ================= */}
+
+            {requiresGloveHand && (
+              <div className="mb-8">
+
+                <div className="mb-3 flex items-center justify-between">
+
+                  <span className="text-sm font-semibold text-gray-900">
+                    Glove Hand
+                  </span>
+
+                  {selectedHand && (
+                    <span className="text-sm text-gray-500">
+                      {selectedHand ===
+                      'left'
+                        ? 'Left Hand'
+                        : 'Right Hand'}
+                    </span>
+                  )}
+
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+
+                  {GLOVE_HANDS.map(
+                    (hand) => (
+                      <button
+                        key={
+                          hand.value
+                        }
+                        type="button"
+                        onClick={
+                          () => {
+                            setSelectedHand(
+                              hand.value
+                            )
+
+                            setOptionError('')
+                          }
+                        }
+                        className={`rounded-lg border px-4 py-3 text-sm font-semibold transition-all ${
+                          selectedHand ===
+                          hand.value
+                            ? 'border-forest-600 bg-forest-600 text-white shadow-sm'
+                            : 'border-gray-300 bg-white text-gray-700 hover:border-forest-500 hover:text-forest-700'
+                        }`}
+                        aria-pressed={
+                          selectedHand ===
+                          hand.value
+                        }
+                      >
+                        {hand.label}
+                      </button>
+                    )
+                  )}
+
+                </div>
+
+                <p className="mt-2 text-xs leading-5 text-gray-500">
+                  Choose the hand the glove will be worn on. Right-handed golfers typically wear a glove on the left hand; left-handed golfers typically wear it on the right.
+                </p>
+
+              </div>
+            )}
+
+            {optionError && (
+              <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {optionError}
+              </div>
+            )}
+
+            {/* ================= */}
             {/* COLOR */}
             {/* ================= */}
 
@@ -845,14 +1111,16 @@ export default function ProductDetailPage() {
                 }
                 className={`flex h-[52px] w-[52px] items-center justify-center rounded-lg border transition-all ${
                   isInWishlist(
-                    product.id
+                    product.id,
+                    currentColor
                   )
                     ? 'border-red-200 bg-red-50'
                     : 'border-gray-300 hover:border-forest-600'
                 }`}
                 aria-label={
                   isInWishlist(
-                    product.id
+                    product.id,
+                    currentColor
                   )
                     ? 'Remove from wishlist'
                     : 'Add to wishlist'
@@ -863,7 +1131,8 @@ export default function ProductDetailPage() {
                   size={21}
                   className={
                     isInWishlist(
-                      product.id
+                      product.id,
+                      currentColor
                     )
                       ? 'fill-red-500 text-red-500'
                       : 'text-gray-600'

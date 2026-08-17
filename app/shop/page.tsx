@@ -589,47 +589,62 @@ export default function ShopPage() {
 
                       </Link>
 
-                      {/* ADD TO CART */}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleAddToCart(
-                            product
-                          )
-                        }
-                        disabled={
-                          isAdded
-                        }
-                        className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 font-semibold transition-all ${
-                          isAdded
-                            ? 'bg-green-600 text-white'
-                            : 'bg-forest-600 text-white hover:bg-forest-700'
-                        }`}
-                      >
+                      {/* ADD TO CART / CHOOSE OPTIONS */}
 
-                        {isAdded ? (
-                          <>
-                            <Check
-                              size={
-                                18
-                              }
-                            />
+                      {product.id === 1 ||
+                      product.id === 9 ? (
+                        <Link
+                          href={`/shop/${product.id}?color=${selectedColor}`}
+                          className="flex w-full items-center justify-center gap-2 rounded-lg bg-forest-600 py-2.5 font-semibold text-white transition-all hover:bg-forest-700"
+                        >
+                          <ShoppingCart
+                            size={18}
+                          />
 
-                            Added to Cart
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart
-                              size={
-                                18
-                              }
-                            />
+                          Choose Options
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleAddToCart(
+                              product
+                            )
+                          }
+                          disabled={
+                            isAdded
+                          }
+                          className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 font-semibold transition-all ${
+                            isAdded
+                              ? 'bg-green-600 text-white'
+                              : 'bg-forest-600 text-white hover:bg-forest-700'
+                          }`}
+                        >
 
-                            Add to Cart
-                          </>
-                        )}
+                          {isAdded ? (
+                            <>
+                              <Check
+                                size={
+                                  18
+                                }
+                              />
 
-                      </button>
+                              Added to Cart
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingCart
+                                size={
+                                  18
+                                }
+                              />
+
+                              Add to Cart
+                            </>
+                          )}
+
+                        </button>
+                      )}
 
                     </div>
 

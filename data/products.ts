@@ -28,6 +28,13 @@ export type Product = {
    */
   isNew?: boolean
   isPopular?: boolean
+
+  /*
+   * Optional size-guide destination.
+   * Only products with a dedicated
+   * size guide should define this.
+   */
+  sizeGuideHref?: string
 }
 
 export const products: Product[] = [
@@ -86,6 +93,9 @@ export const products: Product[] = [
 
     isNew: true,
     isPopular: true,
+
+    sizeGuideHref:
+      '/size-guide#performance-polo',
   },
 
   {
@@ -226,51 +236,70 @@ export const products: Product[] = [
     isPopular: false,
   },
 
-  {
-    id: 4,
-    category: 'BAGS',
-    name: 'Premium Tote Bag',
+{
+    id: 9,
+    category: 'ACCESSORIES',
+    name: 'Leather Golf Glove',
     price: 1290,
 
     colors: [
-      'forest',
+      'ivory',
     ],
 
     images: {
-      forest:
-        '/images/golf-totebag-green.png',
+      ivory:
+        '/images/leather-golf-glove-ivory.png',
     },
 
+    /*
+     * Change this path if you create
+     * a dedicated glove banner image.
+     *
+     * For now it uses the normal
+     * ivory product render.
+     */
     newArrivalImage:
-      '/images/golf-totebag-green-banner.png',
+      '/images/leather-golf-glove.png',
 
     description:
-      'Structured premium canvas tote designed for the clubhouse, course, and everyday carry.',
+      'Premium Cabretta leather golf glove designed for superior grip, comfort, and confident performance.',
 
     longDescription:
-      'A clean and versatile tote featuring a structured silhouette and understated VERDE styling, designed for everyday essentials whether heading to the club or around the city.',
+      'Crafted from premium Cabretta leather, the VERDE Leather Golf Glove combines a soft, refined feel with dependable grip and flexibility. Perforated detailing improves breathability while the adjustable wrist closure provides a secure and comfortable fit throughout every round.',
 
     materials: [
-      'Structured canvas body',
-      'Reinforced carry handles',
+      'Premium Cabretta leather',
+      'Breathable perforated leather panels',
+      'Reinforced wrist closure',
     ],
 
     features: [
-      'Spacious main compartment',
-      'Structured silhouette',
-      'VERDE branding',
-      'Durable carry handles',
-      'Versatile everyday design',
+      'Soft premium leather construction',
+      'Designed for superior grip and control',
+      'Perforated fingers for breathability',
+      'Flexible construction for natural movement',
+      'Adjustable wrist closure',
+      'Signature VERDE branding',
     ],
 
     care: [
-      'Spot clean with a damp cloth',
-      'Air dry',
+      'Wipe clean with a soft damp cloth',
+      'Do not machine wash',
       'Do not bleach',
+      'Allow to air dry naturally',
+      'Keep away from direct heat',
+      'Store flat when not in use',
+    ],
+
+    includes: [
+      '1 VERDE Leather Golf Glove',
     ],
 
     isNew: true,
     isPopular: false,
+
+    sizeGuideHref:
+      '/size-guide#golf-glove',
   },
 
   {
@@ -474,64 +503,47 @@ export const products: Product[] = [
     isNew: false,
     isPopular: false,
   },
-
-  {
-    id: 9,
-    category: 'ACCESSORIES',
-    name: 'Leather Golf Glove',
+{
+    id: 4,
+    category: 'BAGS',
+    name: 'Premium Tote Bag',
     price: 1290,
 
     colors: [
-      'ivory',
+      'forest',
     ],
 
     images: {
-      ivory:
-        '/images/leather-golf-glove-ivory.png',
+      forest:
+        '/images/golf-totebag-green.png',
     },
 
-    /*
-     * Change this path if you create
-     * a dedicated glove banner image.
-     *
-     * For now it uses the normal
-     * ivory product render.
-     */
     newArrivalImage:
-      '/images/leather-golf-glove.png',
+      '/images/golf-totebag-green-banner.png',
 
     description:
-      'Premium Cabretta leather golf glove designed for superior grip, comfort, and confident performance.',
+      'Structured premium canvas tote designed for the clubhouse, course, and everyday carry.',
 
     longDescription:
-      'Crafted from premium Cabretta leather, the VERDE Leather Golf Glove combines a soft, refined feel with dependable grip and flexibility. Perforated detailing improves breathability while the adjustable wrist closure provides a secure and comfortable fit throughout every round.',
+      'A clean and versatile tote featuring a structured silhouette and understated VERDE styling, designed for everyday essentials whether heading to the club or around the city.',
 
     materials: [
-      'Premium Cabretta leather',
-      'Breathable perforated leather panels',
-      'Reinforced wrist closure',
+      'Structured canvas body',
+      'Reinforced carry handles',
     ],
 
     features: [
-      'Soft premium leather construction',
-      'Designed for superior grip and control',
-      'Perforated fingers for breathability',
-      'Flexible construction for natural movement',
-      'Adjustable wrist closure',
-      'Signature VERDE branding',
+      'Spacious main compartment',
+      'Structured silhouette',
+      'VERDE branding',
+      'Durable carry handles',
+      'Versatile everyday design',
     ],
 
     care: [
-      'Wipe clean with a soft damp cloth',
-      'Do not machine wash',
+      'Spot clean with a damp cloth',
+      'Air dry',
       'Do not bleach',
-      'Allow to air dry naturally',
-      'Keep away from direct heat',
-      'Store flat when not in use',
-    ],
-
-    includes: [
-      '1 VERDE Leather Golf Glove',
     ],
 
     isNew: true,

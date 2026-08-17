@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -12,6 +13,11 @@ import {
 } from '@/context/CartContext'
 
 import {
+  productRequiresGloveHand,
+  productRequiresSize,
+} from '@/data/productOptions'
+
+import {
   getColorClass,
   getColorDisplay,
   getProductById,
@@ -19,6 +25,7 @@ import {
 } from '@/lib/productUtils'
 
 import {
+  Check,
   Eye,
   Heart,
   ShoppingCart,
@@ -34,6 +41,13 @@ export default function WishlistPage() {
   const {
     addToCart,
   } = useCart()
+
+  const [
+    addedToCart,
+    setAddedToCart,
+  ] = useState<string | null>(
+    null
+  )
 
   /*
    * Turn each saved color into
@@ -76,6 +90,14 @@ export default function WishlistPage() {
    * ============================
    * ADD SAVED VARIANT TO CART
    * ============================
+   *
+   * Only products that do NOT
+   * require extra selections are
+   * added directly here.
+   *
+   * Products requiring size / hand
+   * selection are sent to their
+   * Product Details page instead.
    */
   const handleAddToCart = (
     productId: number,
@@ -85,6 +107,22 @@ export default function WishlistPage() {
       id: productId,
       color,
     })
+
+    const variantKey =
+      `${productId}-${color}`
+
+    setAddedToCart(
+      variantKey
+    )
+
+    window.setTimeout(() => {
+      setAddedToCart(
+        (current) =>
+          current === variantKey
+            ? null
+            : current
+      )
+    }, 2000)
   }
 
   return (
@@ -184,9 +222,29 @@ export default function WishlistPage() {
                       color
                     )
 
+                  const variantKey =
+                    `${product.id}-${color}`
+
+                  const isAdded =
+                    addedToCart ===
+                    variantKey
+
+                  const requiresOptions =
+                    productRequiresSize(
+                      product.id
+                    ) ||
+                    productRequiresGloveHand(
+                      product.id
+                    )
+
+                  const productDetailsHref =
+                    `/shop/${product.id}?color=${encodeURIComponent(
+                      color
+                    )}`
+
                   return (
                     <div
-                      key={`${product.id}-${color}`}
+                      key={variantKey}
                       className="group flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:-translate-y-1 hover:shadow-lg"
                     >
 
@@ -194,7 +252,9 @@ export default function WishlistPage() {
                       <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
 
                         <Link
-                          href={`/shop/${product.id}?color=${color}`}
+                          href={
+                            productDetailsHref
+                          }
                           className="absolute inset-0"
                         >
 
@@ -255,7 +315,9 @@ export default function WishlistPage() {
                       <div className="flex flex-1 flex-col p-4 sm:p-5">
 
                         <Link
-                          href={`/shop/${product.id}?color=${color}`}
+                          href={
+                            productDetailsHref
+                          }
                         >
 
                           <h3 className="mb-2 text-base font-semibold text-gray-900 transition-colors hover:text-forest-600 sm:text-lg">
@@ -336,7 +398,9 @@ export default function WishlistPage() {
                         <div className="mt-auto">
 
                           <Link
-                            href={`/shop/${product.id}?color=${color}`}
+                            href={
+                              productDetailsHref
+                            }
                             className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg border border-forest-600 py-2.5 text-sm font-semibold text-forest-600 transition-all hover:bg-forest-50"
                           >
 
@@ -348,24 +412,68 @@ export default function WishlistPage() {
 
                           </Link>
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleAddToCart(
-                                product.id,
-                                color
-                              )
-                            }
-                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-forest-600 py-2.5 font-semibold text-white transition-all hover:bg-forest-700"
-                          >
+                          {/*
+                           * Polo / Glove and any
+                           * future products with
+                           * required options must go
+                           * through Product Details.
+                           */}
+                          {requiresOptions ? (
+                            <Link
+                              href={
+                                productDetailsHref
+                              }
+                              className="flex w-full items-center justify-center gap-2 rounded-lg bg-forest-600 py-2.5 font-semibold text-white transition-all hover:bg-forest-700"
+                            >
 
-                            <ShoppingCart
-                              size={18}
-                            />
+                              <ShoppingCart
+                                size={18}
+                              />
 
-                            Add to Cart
+                              Choose Options
 
-                          </button>
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleAddToCart(
+                                  product.id,
+                                  color
+                                )
+                              }
+                              disabled={
+                                isAdded
+                              }
+                              className={`flex w-full items-center justify-center gap-2 rounded-lg py-2.5 font-semibold transition-all duration-200 ${
+                                isAdded
+                                  ? 'scale-[1.02] bg-green-600 text-white shadow-md'
+                                  : 'bg-forest-600 text-white hover:bg-forest-700 active:scale-[0.98]'
+                              }`}
+                              aria-live="polite"
+                            >
+
+                              {isAdded ? (
+                                <>
+                                  <Check
+                                    size={18}
+                                    className="animate-[pulse_700ms_ease-in-out_1]"
+                                  />
+
+                                  Added to Cart
+                                </>
+                              ) : (
+                                <>
+                                  <ShoppingCart
+                                    size={18}
+                                  />
+
+                                  Add to Cart
+                                </>
+                              )}
+
+                            </button>
+                          )}
 
                           <button
                             type="button"

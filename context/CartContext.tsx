@@ -1,80 +1,74 @@
 'use client'
 
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
   useState,
 } from 'react'
 
-import { products } from '@/data/products'
+import {
+  products,
+} from '@/data/products'
 
-/*
- * ==============================
- * CART ITEM
- * ==============================
- *
- * We only store information that
- * is unique to the cart selection.
- *
- * Product name, price, category,
- * and images come from products.ts.
- */
-export interface CartItem {
+import {
+  GloveHand,
+  isValidGloveHand,
+  isValidProductSize,
+} from '@/data/productOptions'
+
+export type CartItem = {
   id: number
   color: string
+  size?: string
+  hand?: GloveHand
   quantity: number
 }
 
-/*
- * ==============================
- * ADD TO CART INPUT
- * ==============================
- *
- * Optional legacy properties are
- * included so your existing Shop
- * code still works even if it sends:
- *
- * name
- * price
- * category
- * image
- *
- * They will NOT be stored.
- */
-export interface AddToCartItem {
+type AddToCartInput = {
   id: number
   color: string
+  size?: string
+  hand?: GloveHand
 
+  /*
+   * Kept optional for compatibility
+   * with older callers. Product name,
+   * price, and category still come
+   * from products.ts.
+   */
   name?: string
   price?: number
   category?: string
-  image?: string
 }
 
-interface CartContextType {
+type CartContextType = {
   cart: CartItem[]
 
   addToCart: (
-    item: AddToCartItem
+    item: AddToCartInput
   ) => void
 
   removeFromCart: (
     id: number,
-    color: string
+    color: string,
+    size?: string,
+    hand?: GloveHand
   ) => void
 
   updateQuantity: (
     id: number,
     color: string,
-    quantity: number
+    quantity: number,
+    size?: string,
+    hand?: GloveHand
   ) => void
 
   clearCart: () => void
 
-  getCartTotal: () => number
-
   getCartCount: () => number
+
+  getCartTotal: () => number
 }
 
 const CartContext =
@@ -82,368 +76,451 @@ const CartContext =
     CartContextType | undefined
   >(undefined)
 
-/*
- * ==============================
- * PRODUCT LOOKUP
- * ==============================
- */
-function getProductById(
-  id: number
-) {
-  return products.find(
-    (product) =>
-      product.id === id
+const STORAGE_KEY =
+  'verde-cart'
+
+const normalizeOptional =
+  (
+    value?: string
+  ) =>
+    value?.trim()
+      ? value.trim()
+      : undefined
+
+const sameVariant = (
+  item: CartItem,
+  variant: {
+    id: number
+    color: string
+    size?: string
+    hand?: GloveHand
+  }
+) =>
+  item.id === variant.id &&
+  item.color ===
+    variant.color &&
+  (item.size || undefined) ===
+    (variant.size ||
+      undefined) &&
+  (item.hand || undefined) ===
+    (variant.hand ||
+      undefined)
+
+const sanitizeStoredCart = (
+  value: unknown
+): CartItem[] => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  const sanitized: CartItem[] =
+    []
+
+  value.forEach(
+    (raw) => {
+      if (
+        !raw ||
+        typeof raw !==
+          'object'
+      ) {
+        return
+      }
+
+      const record =
+        raw as Record<
+          string,
+          unknown
+        >
+
+      const id =
+        Number(
+          record.id
+        )
+
+      const color =
+        typeof record.color ===
+        'string'
+          ? record.color
+          : ''
+
+      const size =
+        typeof record.size ===
+        'string'
+          ? normalizeOptional(
+              record.size
+            )
+          : undefined
+
+      const hand =
+        record.hand ===
+          'left' ||
+        record.hand ===
+          'right'
+          ? record.hand
+          : undefined
+
+      const quantity =
+        Math.max(
+          1,
+          Math.floor(
+            Number(
+              record.quantity
+            ) || 1
+          )
+        )
+
+      const product =
+        products.find(
+          (item) =>
+            item.id === id
+        )
+
+      if (
+        !product ||
+        !product.colors.includes(
+          color
+        )
+      ) {
+        return
+      }
+
+      /*
+       * Old cart entries for the
+       * Polo/Glove did not contain
+       * size/hand. We drop those
+       * invalid variants instead of
+       * silently guessing a size.
+       */
+      if (
+        !isValidProductSize(
+          id,
+          size
+        ) ||
+        !isValidGloveHand(
+          id,
+          hand
+        )
+      ) {
+        return
+      }
+
+      const nextItem: CartItem =
+        {
+          id,
+          color,
+          size,
+          hand,
+          quantity,
+        }
+
+      const existing =
+        sanitized.find(
+          (item) =>
+            sameVariant(
+              item,
+              nextItem
+            )
+        )
+
+      if (existing) {
+        existing.quantity +=
+          quantity
+
+        return
+      }
+
+      sanitized.push(
+        nextItem
+      )
+    }
   )
+
+  return sanitized
 }
 
 export function CartProvider({
   children,
 }: {
-  children: React.ReactNode
+  children:
+    React.ReactNode
 }) {
   const [
     cart,
     setCart,
-  ] = useState<CartItem[]>([])
+  ] = useState<CartItem[]>(
+    []
+  )
 
-  /*
-   * Prevent the initial empty
-   * state from deleting localStorage
-   * before it has been loaded.
-   */
   const [
-    hasLoaded,
-    setHasLoaded,
+    isLoaded,
+    setIsLoaded,
   ] = useState(false)
 
   /*
-   * ==============================
-   * LOAD CART
-   * ==============================
-   *
-   * This also migrates your OLD cart
-   * structure automatically.
-   *
-   * Old:
-   *
-   * {
-   *   id,
-   *   name,
-   *   price,
-   *   category,
-   *   color,
-   *   quantity,
-   *   image
-   * }
-   *
-   * New:
-   *
-   * {
-   *   id,
-   *   color,
-   *   quantity
-   * }
+   * Load saved cart once.
    */
   useEffect(() => {
-    const savedCart =
-      localStorage.getItem(
-        'verde-cart'
-      )
+    try {
+      const stored =
+        window.localStorage.getItem(
+          STORAGE_KEY
+        )
 
-    if (savedCart) {
-      try {
+      if (stored) {
         const parsed =
           JSON.parse(
-            savedCart
+            stored
           )
 
-        if (
-          Array.isArray(parsed)
-        ) {
-          const migratedCart: CartItem[] =
+        setCart(
+          sanitizeStoredCart(
             parsed
-              .filter(
-                (item) => {
-                  if (
-                    typeof item?.id !==
-                      'number' ||
-                    typeof item?.color !==
-                      'string'
-                  ) {
-                    return false
-                  }
-
-                  /*
-                   * Only retain products
-                   * that still exist.
-                   */
-                  return Boolean(
-                    getProductById(
-                      item.id
-                    )
-                  )
-                }
-              )
-              .map(
-                (item) => ({
-                  id: item.id,
-
-                  color:
-                    item.color,
-
-                  quantity:
-                    typeof item.quantity ===
-                      'number' &&
-                    item.quantity > 0
-                      ? item.quantity
-                      : 1,
-                })
-              )
-
-          setCart(
-            migratedCart
           )
-        }
-      } catch (
-        error
-      ) {
-        console.error(
-          'Error loading cart:',
-          error
-        )
-
-        localStorage.removeItem(
-          'verde-cart'
         )
       }
+    } catch (error) {
+      console.error(
+        'Unable to load cart:',
+        error
+      )
+    } finally {
+      setIsLoaded(true)
     }
-
-    setHasLoaded(true)
   }, [])
 
   /*
-   * ==============================
-   * SAVE CART
-   * ==============================
+   * Persist after the initial
+   * localStorage read completes.
    */
   useEffect(() => {
-    if (!hasLoaded) {
+    if (!isLoaded) {
       return
     }
 
-    if (
-      cart.length > 0
-    ) {
-      localStorage.setItem(
-        'verde-cart',
+    try {
+      window.localStorage.setItem(
+        STORAGE_KEY,
         JSON.stringify(
           cart
         )
       )
-    } else {
-      localStorage.removeItem(
-        'verde-cart'
+    } catch (error) {
+      console.error(
+        'Unable to save cart:',
+        error
       )
     }
   }, [
     cart,
-    hasLoaded,
+    isLoaded,
   ])
 
-  /*
-   * ==============================
-   * ADD TO CART
-   * ==============================
-   */
   const addToCart = (
-    item: AddToCartItem
+    input: AddToCartInput
   ) => {
     const product =
-      getProductById(
-        item.id
+      products.find(
+        (item) =>
+          item.id ===
+          input.id
       )
 
-    /*
-     * Don't add products that
-     * aren't in products.ts.
-     */
     if (!product) {
-      console.warn(
-        `Product with ID ${item.id} was not found.`
-      )
-
       return
     }
 
-    /*
-     * Validate selected color.
-     *
-     * If something invalid gets
-     * passed, use the product's
-     * first available color.
-     */
-    const selectedColor =
-      product.colors.includes(
-        item.color
+    if (
+      !product.colors.includes(
+        input.color
       )
-        ? item.color
-        : product.colors[0]
-
-    if (!selectedColor) {
-      console.warn(
-        `Product ${item.id} has no valid color.`
-      )
-
+    ) {
       return
+    }
+
+    const size =
+      normalizeOptional(
+        input.size
+      )
+
+    const hand =
+      input.hand
+
+    /*
+     * Never allow an invalid Polo or
+     * Glove variant into the cart.
+     */
+    if (
+      !isValidProductSize(
+        product.id,
+        size
+      ) ||
+      !isValidGloveHand(
+        product.id,
+        hand
+      )
+    ) {
+      return
+    }
+
+    const variant = {
+      id:
+        product.id,
+      color:
+        input.color,
+      size,
+      hand,
     }
 
     setCart(
-      (prevCart) => {
-        const existingItem =
-          prevCart.find(
-            (cartItem) =>
-              cartItem.id ===
-                item.id &&
-              cartItem.color ===
-                selectedColor
+      (previous) => {
+        const existingIndex =
+          previous.findIndex(
+            (item) =>
+              sameVariant(
+                item,
+                variant
+              )
           )
 
-        /*
-         * Same product + same color:
-         * increase quantity.
-         */
-        if (existingItem) {
-          return prevCart.map(
-            (
-              cartItem
-            ) =>
-              cartItem.id ===
-                item.id &&
-              cartItem.color ===
-                selectedColor
-                ? {
-                    ...cartItem,
-
-                    quantity:
-                      cartItem.quantity +
-                      1,
-                  }
-                : cartItem
-          )
+        if (
+          existingIndex === -1
+        ) {
+          return [
+            ...previous,
+            {
+              ...variant,
+              quantity: 1,
+            },
+          ]
         }
 
-        /*
-         * New cart variant.
-         */
-        return [
-          ...prevCart,
-
-          {
-            id: item.id,
-            color:
-              selectedColor,
-            quantity: 1,
-          },
-        ]
+        return previous.map(
+          (
+            item,
+            index
+          ) =>
+            index ===
+            existingIndex
+              ? {
+                  ...item,
+                  quantity:
+                    item.quantity +
+                    1,
+                }
+              : item
+        )
       }
     )
   }
 
-  /*
-   * ==============================
-   * REMOVE FROM CART
-   * ==============================
-   */
   const removeFromCart = (
     id: number,
-    color: string
+    color: string,
+    size?: string,
+    hand?: GloveHand
   ) => {
+    const variant = {
+      id,
+      color,
+      size:
+        normalizeOptional(
+          size
+        ),
+      hand,
+    }
+
     setCart(
-      (prevCart) =>
-        prevCart.filter(
+      (previous) =>
+        previous.filter(
           (item) =>
-            !(
-              item.id === id &&
-              item.color ===
-                color
+            !sameVariant(
+              item,
+              variant
             )
         )
     )
   }
 
-  /*
-   * ==============================
-   * UPDATE QUANTITY
-   * ==============================
-   */
   const updateQuantity = (
     id: number,
     color: string,
-    quantity: number
+    quantity: number,
+    size?: string,
+    hand?: GloveHand
   ) => {
-    /*
-     * Quantity 0 removes the item.
-     */
-    if (
-      quantity <= 0
-    ) {
+    const variant = {
+      id,
+      color,
+      size:
+        normalizeOptional(
+          size
+        ),
+      hand,
+    }
+
+    if (quantity <= 0) {
       removeFromCart(
         id,
-        color
+        color,
+        size,
+        hand
       )
 
       return
     }
 
     setCart(
-      (prevCart) =>
-        prevCart.map(
+      (previous) =>
+        previous.map(
           (item) =>
-            item.id === id &&
-            item.color ===
-              color
+            sameVariant(
+              item,
+              variant
+            )
               ? {
                   ...item,
-                  quantity,
+                  quantity:
+                    Math.max(
+                      1,
+                      Math.floor(
+                        quantity
+                      )
+                    ),
                 }
               : item
         )
     )
   }
 
-  /*
-   * ==============================
-   * CLEAR CART
-   * ==============================
-   */
-  const clearCart = () => {
-    setCart([])
-  }
-
-  /*
-   * ==============================
-   * CART TOTAL
-   * ==============================
-   *
-   * IMPORTANT:
-   *
-   * Price comes directly from
-   * products.ts.
-   *
-   * This means changing a price in
-   * products.ts automatically updates
-   * the cart.
-   */
-  const getCartTotal =
+  const clearCart =
     () => {
-      return cart.reduce(
+      setCart([])
+    }
+
+  const getCartCount =
+    () =>
+      cart.reduce(
+        (
+          total,
+          item
+        ) =>
+          total +
+          item.quantity,
+        0
+      )
+
+  const getCartTotal =
+    () =>
+      cart.reduce(
         (
           total,
           item
         ) => {
           const product =
-            getProductById(
-              item.id
+            products.find(
+              (candidate) =>
+                candidate.id ===
+                item.id
             )
 
           if (!product) {
@@ -458,25 +535,6 @@ export function CartProvider({
         },
         0
       )
-    }
-
-  /*
-   * ==============================
-   * CART COUNT
-   * ==============================
-   */
-  const getCartCount =
-    () => {
-      return cart.reduce(
-        (
-          count,
-          item
-        ) =>
-          count +
-          item.quantity,
-        0
-      )
-    }
 
   return (
     <CartContext.Provider
@@ -486,8 +544,8 @@ export function CartProvider({
         removeFromCart,
         updateQuantity,
         clearCart,
-        getCartTotal,
         getCartCount,
+        getCartTotal,
       }}
     >
       {children}
@@ -501,12 +559,9 @@ export function useCart() {
       CartContext
     )
 
-  if (
-    context ===
-    undefined
-  ) {
+  if (!context) {
     throw new Error(
-      'useCart must be used within a CartProvider'
+      'useCart must be used inside CartProvider.'
     )
   }
 

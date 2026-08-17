@@ -15,7 +15,12 @@ import {
   getColorClass,
   getColorDisplay,
   getProductById,
+  getProductImage,
 } from '@/lib/productUtils'
+
+import {
+  getGloveHandDisplay,
+} from '@/data/productOptions'
 
 import {
   AlertTriangle,
@@ -54,80 +59,9 @@ export default function CartModal({
 
   /*
    * ============================
-   * GET CART PRODUCT IMAGE
-   * ============================
-   *
-   * Images come DIRECTLY from
-   * products.ts.
-   *
-   * Priority:
-   *
-   * 1. Exact selected color
-   * 2. Product default color
-   * 3. First available image
-   */
-  const getCartProductImage = (
-    productId: number,
-    color: string
-  ): string | null => {
-    const product =
-      getProductById(
-        productId
-      )
-
-    if (!product) {
-      return null
-    }
-
-    /*
-     * Exact selected-color image.
-     */
-    if (
-      product.images[color]
-    ) {
-      return product.images[
-        color
-      ]
-    }
-
-    /*
-     * Default product color.
-     */
-    const defaultColor =
-      product.colors[0]
-
-    if (
-      defaultColor &&
-      product.images[
-        defaultColor
-      ]
-    ) {
-      return product.images[
-        defaultColor
-      ]
-    }
-
-    /*
-     * Final fallback:
-     * first image in object.
-     */
-    const firstImage =
-      Object.values(
-        product.images
-      )[0]
-
-    return (
-      firstImage ||
-      null
-    )
-  }
-
-  /*
-   * ============================
    * CLEAR CART
    * ============================
    */
-
   const handleRequestClearCart =
     () => {
       setShowClearConfirmation(
@@ -156,7 +90,6 @@ export default function CartModal({
    * CLOSE CART
    * ============================
    */
-
   const handleCloseCart =
     () => {
       setShowClearConfirmation(
@@ -169,10 +102,7 @@ export default function CartModal({
   return (
     <>
 
-      {/* ======================= */}
       {/* BACKDROP */}
-      {/* ======================= */}
-
       <div
         className="fixed inset-0 z-50 bg-black/50 transition-opacity"
         onClick={
@@ -180,16 +110,10 @@ export default function CartModal({
         }
       />
 
-      {/* ======================= */}
       {/* CART SIDEBAR */}
-      {/* ======================= */}
-
       <div className="fixed top-0 right-0 z-50 flex h-full w-full flex-col overflow-hidden bg-white shadow-2xl sm:w-96">
 
-        {/* ======================= */}
         {/* HEADER */}
-        {/* ======================= */}
-
         <div className="flex items-center justify-between border-b border-gray-200 p-4 sm:p-6">
 
           <h2 className="font-serif text-xl font-semibold text-forest-700">
@@ -197,8 +121,6 @@ export default function CartModal({
           </h2>
 
           <div className="flex items-center gap-3">
-
-            {/* CLEAR ALL */}
 
             {cart.length > 0 && (
               <button
@@ -219,8 +141,6 @@ export default function CartModal({
               </button>
             )}
 
-            {/* CLOSE */}
-
             <button
               type="button"
               onClick={
@@ -240,18 +160,11 @@ export default function CartModal({
 
         </div>
 
-        {/* ======================= */}
-        {/* CART CONTENT */}
-        {/* ======================= */}
-
+        {/* ITEMS */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
 
           {cart.length ===
           0 ? (
-
-            /* ======================= */
-            /* EMPTY CART */
-            /* ======================= */
 
             <div className="flex h-full flex-col items-center justify-center text-center">
 
@@ -279,18 +192,10 @@ export default function CartModal({
 
           ) : (
 
-            /* ======================= */
-            /* CART ITEMS */
-            /* ======================= */
-
             <div className="space-y-4">
 
               {cart.map(
                 (item) => {
-                  /*
-                   * Product comes from
-                   * products.ts.
-                   */
                   const product =
                     getProductById(
                       item.id
@@ -300,26 +205,19 @@ export default function CartModal({
                     return null
                   }
 
-                  /*
-                   * Image also comes from
-                   * products.ts.
-                   */
-                  const productImage =
-                    getCartProductImage(
-                      item.id,
+                  const image =
+                    getProductImage(
+                      product,
                       item.color
                     )
 
                   return (
                     <div
-                      key={`${item.id}-${item.color}`}
+                      key={`${item.id}-${item.color}-${item.size || 'no-size'}-${item.hand || 'no-hand'}`}
                       className="flex gap-4 rounded-lg bg-gray-50 p-4"
                     >
 
-                      {/* ======================= */}
-                      {/* PRODUCT IMAGE */}
-                      {/* ======================= */}
-
+                      {/* IMAGE */}
                       <Link
                         href={`/shop/${product.id}?color=${item.color}`}
                         onClick={
@@ -328,14 +226,10 @@ export default function CartModal({
                         className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md bg-gray-200"
                       >
 
-                        {productImage ? (
-
+                        {image ? (
                           <Image
-                            key={
-                              productImage
-                            }
                             src={
-                              productImage
+                              image
                             }
                             alt={`${product.name} - ${getColorDisplay(
                               item.color
@@ -344,24 +238,16 @@ export default function CartModal({
                             className="object-cover object-center"
                             sizes="80px"
                           />
-
                         ) : (
-
-                          <div className="absolute inset-0 flex items-center justify-center px-2 text-center text-xs text-gray-400">
+                          <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">
                             No Image
                           </div>
-
                         )}
 
                       </Link>
 
-                      {/* ======================= */}
-                      {/* PRODUCT INFO */}
-                      {/* ======================= */}
-
+                      {/* INFO */}
                       <div className="min-w-0 flex-1">
-
-                        {/* NAME */}
 
                         <Link
                           href={`/shop/${product.id}?color=${item.color}`}
@@ -380,10 +266,7 @@ export default function CartModal({
 
                         </Link>
 
-                        {/* ======================= */}
                         {/* COLOR */}
-                        {/* ======================= */}
-
                         <div className="mb-2 flex items-center gap-2">
 
                           <span
@@ -404,10 +287,34 @@ export default function CartModal({
 
                         </div>
 
-                        {/* ======================= */}
-                        {/* PRICE */}
-                        {/* ======================= */}
+                        {(item.size ||
+                          item.hand) && (
+                          <div className="mb-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
 
+                            {item.size && (
+                              <span>
+                                Size:{' '}
+                                <strong className="font-medium text-gray-700">
+                                  {item.size}
+                                </strong>
+                              </span>
+                            )}
+
+                            {item.hand && (
+                              <span>
+                                Glove Hand:{' '}
+                                <strong className="font-medium text-gray-700">
+                                  {getGloveHandDisplay(
+                                    item.hand
+                                  )}
+                                </strong>
+                              </span>
+                            )}
+
+                          </div>
+                        )}
+
+                        {/* PRICE */}
                         <p className="text-sm font-semibold text-forest-600">
 
                           ₱
@@ -417,13 +324,8 @@ export default function CartModal({
 
                         </p>
 
-                        {/* ======================= */}
                         {/* QUANTITY */}
-                        {/* ======================= */}
-
                         <div className="mt-3 flex items-center gap-2">
-
-                          {/* MINUS */}
 
                           <button
                             type="button"
@@ -432,7 +334,9 @@ export default function CartModal({
                                 item.id,
                                 item.color,
                                 item.quantity -
-                                  1
+                                  1,
+                                item.size,
+                                item.hand
                               )
                             }
                             className="flex h-7 w-7 items-center justify-center rounded border border-gray-300 transition-colors hover:bg-gray-100"
@@ -445,8 +349,6 @@ export default function CartModal({
 
                           </button>
 
-                          {/* COUNT */}
-
                           <span className="w-8 text-center text-sm font-medium">
 
                             {
@@ -455,8 +357,6 @@ export default function CartModal({
 
                           </span>
 
-                          {/* PLUS */}
-
                           <button
                             type="button"
                             onClick={() =>
@@ -464,7 +364,9 @@ export default function CartModal({
                                 item.id,
                                 item.color,
                                 item.quantity +
-                                  1
+                                  1,
+                                item.size,
+                                item.hand
                               )
                             }
                             className="flex h-7 w-7 items-center justify-center rounded border border-gray-300 transition-colors hover:bg-gray-100"
@@ -477,14 +379,14 @@ export default function CartModal({
 
                           </button>
 
-                          {/* REMOVE */}
-
                           <button
                             type="button"
                             onClick={() =>
                               removeFromCart(
                                 item.id,
-                                item.color
+                                item.color,
+                                item.size,
+                                item.hand
                               )
                             }
                             className="ml-auto flex h-7 w-7 items-center justify-center text-red-500 transition-colors hover:text-red-600"
@@ -512,15 +414,10 @@ export default function CartModal({
 
         </div>
 
-        {/* ======================= */}
         {/* FOOTER */}
-        {/* ======================= */}
-
         {cart.length > 0 && (
 
           <div className="space-y-4 border-t border-gray-200 bg-white p-4 sm:p-6">
-
-            {/* SUBTOTAL */}
 
             <div className="flex items-center justify-between text-lg font-semibold">
 
@@ -539,10 +436,8 @@ export default function CartModal({
 
             </div>
 
-            {/* CHECKOUT */}
-
             <Link
-              href="/contact-us"
+              href="/checkout"
               onClick={
                 handleCloseCart
               }
@@ -550,8 +445,6 @@ export default function CartModal({
             >
               Proceed to Checkout
             </Link>
-
-            {/* CONTINUE SHOPPING */}
 
             <Link
               href="/shop"
@@ -567,10 +460,7 @@ export default function CartModal({
 
         )}
 
-        {/* ======================= */}
         {/* CLEAR CONFIRMATION */}
-        {/* ======================= */}
-
         {showClearConfirmation && (
 
           <div
@@ -584,15 +474,11 @@ export default function CartModal({
               role="dialog"
               aria-modal="true"
               aria-labelledby="clear-cart-title"
-              onClick={(
-                event
-              ) =>
+              onClick={(event) =>
                 event.stopPropagation()
               }
               className="w-full max-w-[320px] overflow-hidden rounded-2xl bg-white shadow-2xl"
             >
-
-              {/* CONTENT */}
 
               <div className="px-6 pt-7 pb-6 text-center">
 
@@ -617,8 +503,6 @@ export default function CartModal({
                 </p>
 
               </div>
-
-              {/* ACTIONS */}
 
               <div className="grid grid-cols-2 border-t border-gray-100">
 

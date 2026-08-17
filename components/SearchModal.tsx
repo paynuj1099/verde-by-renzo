@@ -553,6 +553,16 @@ export default function SearchModal({
                     </Link>
 
                     <Link
+                      href="/size-guide"
+                      onClick={
+                        onClose
+                      }
+                      className="rounded-lg p-3 text-gray-700 transition-colors hover:bg-forest-50 hover:text-forest-600"
+                    >
+                      Size Guide →
+                    </Link>
+
+                    <Link
                       href="/blog"
                       onClick={
                         onClose
