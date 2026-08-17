@@ -47,3 +47,10 @@
     animation: loading-progress 1.5s ease-in-out infinite;
   }
 }
+
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
