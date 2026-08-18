@@ -14,14 +14,15 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getIdTokenResult } from "firebase/auth";
-import { ArrowLeft, Plus, Search, Trash2, Upload, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { firestore } from "@/lib/firebase";
 import type { BlogPostRecord } from "@/context/BlogContext";
 import SiteAssetImage from "@/components/SiteAssetImage";
 import AdminRowActions from "@/components/AdminRowActions";
 import AdminPageSkeleton from "@/components/AdminPageSkeleton";
-
+import AdminToast from '@/components/AdminToast';
+import AdminConfirmModal from '@/components/AdminConfirmModal'
 type BlogForm = Omit<BlogPostRecord, "id">;
 const today = () => new Date().toISOString().slice(0, 10);
 const emptyForm = (): BlogForm => ({
@@ -53,6 +54,7 @@ export default function BlogAdminPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<BlogPostRecord | null>(null);
+  const [confirmSave, setConfirmSave] = useState(false);
   const [pendingCover, setPendingCover] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState("");
 
@@ -117,6 +119,18 @@ export default function BlogAdminPage() {
     setForm(fields);
     setOpen(true);
   };
+  const handleSaveAttempt = (event: FormEvent) => {
+    event.preventDefault();
+    if (saving || uploading) return;
+    setConfirmSave(true);
+  };
+
+  const handleConfirmSave = async () => {
+    setConfirmSave(false);
+    const event = { preventDefault: () => undefined } as FormEvent;
+    await save(event);
+  };
+
   const save = async (event: FormEvent) => {
     event.preventDefault();
     if (!form.title.trim() || !form.slug.trim() || !form.content.trim()) return;
@@ -265,6 +279,9 @@ export default function BlogAdminPage() {
       <div className="mx-auto w-full max-w-[1480px] px-5 lg:px-8">
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <div>
+            <p className="text-xs font-semibold uppercase tracking-[.2em] text-gold-600">
+              Administration
+            </p>
             <h1 className="font-serif text-3xl text-forest-900">
               Blog Management
             </h1>
@@ -280,14 +297,7 @@ export default function BlogAdminPage() {
             Add article
           </button>
         </div>
-        {message && (
-          <div className="mb-5 flex items-center justify-between rounded-lg border bg-white px-4 py-3 text-sm">
-            {message}
-            <button onClick={() => setMessage("")}>
-              <X size={17} />
-            </button>
-          </div>
-        )}
+        <AdminToast message={message} onDismiss={() => setMessage('')} tone={message.includes('Unable') || message.includes('failed') || message.includes('error') ? 'error' : 'success'} />
         <div className="rounded-2xl border bg-white p-4 sm:p-6">
           <label className="relative block">
             <Search className="absolute left-3 top-3 text-gray-400" size={18} />
@@ -393,75 +403,28 @@ export default function BlogAdminPage() {
           </div>
         )}
       </div>
-      {deleteTarget && (
-        <div
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4"
-          role="alertdialog"
-          aria-modal="true"
-          aria-labelledby="delete-blog-title"
-          aria-describedby="delete-blog-description"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !saving)
-              setDeleteTarget(null);
-          }}
-        >
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
-                <Trash2 size={21} />
-              </div>
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(null)}
-                disabled={saving}
-                className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
-                aria-label="Close delete confirmation"
-              >
-                <X size={19} />
-              </button>
-            </div>
-            <h2
-              id="delete-blog-title"
-              className="mt-4 font-serif text-2xl text-gray-900"
-            >
-              Delete article?
-            </h2>
-            <p
-              id="delete-blog-description"
-              className="mt-2 text-sm leading-6 text-gray-600"
-            >
-              <span className="font-semibold text-gray-800">
-                {deleteTarget.title}
-              </span>{" "}
-              and its uploaded cover image will be permanently removed from
-              Firestore and ImageKit. This action cannot be undone.
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(null)}
-                disabled={saving}
-                className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeletePost}
-                disabled={saving}
-                className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:bg-red-300"
-              >
-                <Trash2 size={16} />
-                {saving ? "Deleting..." : "Delete Article"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AdminConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete article?"
+        description={`${deleteTarget?.title ?? 'This article'} and its uploaded cover image will be permanently removed from Firestore and ImageKit. This action cannot be undone.`}
+        confirmLabel={saving ? 'Deleting...' : 'Delete Article'}
+        tone="danger"
+        onConfirm={confirmDeletePost}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      <AdminConfirmModal
+        open={confirmSave}
+        title="Save changes?"
+        description="This will publish the updated article and keep the current cover image in sync with Firestore and ImageKit."
+        confirmLabel={saving ? 'Saving...' : 'Save article'}
+        tone="success"
+        onConfirm={handleConfirmSave}
+        onCancel={() => setConfirmSave(false)}
+      />
       {open && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-3">
           <form
-            onSubmit={save}
+            onSubmit={handleSaveAttempt}
             className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-5 sm:p-7"
           >
             <div className="mb-5 flex justify-between">
@@ -605,6 +568,7 @@ export default function BlogAdminPage() {
                 Cancel
               </button>
               <button
+                type="submit"
                 disabled={saving || uploading}
                 className="rounded-lg bg-forest-700 px-6 py-3 font-semibold text-white disabled:opacity-50"
               >

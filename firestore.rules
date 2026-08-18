@@ -22,11 +22,13 @@ service cloud.firestore {
     }
 
     match /guestOrders/{reference} {
-      allow create: if request.resource.data.status == 'pre-order' &&
-        request.resource.data.reference == reference &&
-        request.resource.data.keys().hasOnly([
-          'reference', 'customer', 'items', 'totalItems', 'totalAmount', 'status', 'createdAt'
-        ]);
+      allow create: if isAdmin() || (
+        request.resource.data.status == 'pre-order' &&
+          request.resource.data.reference == reference &&
+          request.resource.data.keys().hasOnly([
+            'reference', 'customer', 'items', 'totalItems', 'totalAmount', 'status', 'createdAt'
+          ])
+      );
       allow get: if true;
       allow list, update: if isAdmin();
       allow delete: if false;

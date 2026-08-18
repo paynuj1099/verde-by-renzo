@@ -1,5 +1,5 @@
 export default function AdminDashboardSkeleton() {
-  return <main className="min-h-screen animate-pulse bg-[#fbfaf7] p-4 sm:p-6 xl:p-8" aria-label="Loading admin dashboard">
+  return <main className="mx-auto min-h-screen w-full max-w-[1480px] animate-pulse bg-[#fbfaf7] px-5 py-6 sm:py-8 lg:px-8" aria-label="Loading admin dashboard">
     <div className="mb-8 flex items-center justify-between"><div><div className="mb-3 h-3 w-28 rounded bg-[#e9dfcb]"/><div className="h-9 w-44 rounded bg-gray-200"/></div><div className="hidden h-12 w-80 rounded-xl bg-gray-200 md:block"/></div>
     <div className="mb-5 h-9 rounded-lg bg-[#f1e8d7]"/>
     <div className="grid gap-4 md:grid-cols-3">{[0,1,2].map((item) => <div key={item} className="h-36 rounded-2xl bg-gray-200"/>)}</div>

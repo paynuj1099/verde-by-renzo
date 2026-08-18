@@ -6,7 +6,7 @@
   html {
     @apply scroll-smooth;
   }
-  
+
   body {
     @apply bg-white text-gray-900 antialiased;
   }
@@ -48,6 +48,54 @@
   }
 }
 
+/* Admin-only luxury palette: charcoal, forest, warm ivory, and muted brass. */
+.admin-shell main {
+  background: linear-gradient(
+    145deg,
+    #eeece6 0%,
+    #f4f2ed 52%,
+    #ebe9e2 100%
+  ) !important;
+  color: #172019;
+}
+
+.admin-shell main .bg-white {
+  background-color: #fffdf9;
+}
+
+.admin-shell main .bg-gray-50 {
+  background-color: #f7f4ed;
+}
+
+.admin-shell main .border,
+.admin-shell main .border-gray-100,
+.admin-shell main .border-gray-200 {
+  border-color: #ded8cc;
+}
+
+.admin-shell main input,
+.admin-shell main textarea {
+  border-color: #d8d1c4;
+  background-color: #fffdf9;
+}
+
+.admin-shell main input:focus,
+.admin-shell main textarea:focus {
+  outline: none;
+  border-color: #31543d;
+  box-shadow: 0 0 0 3px rgba(49, 84, 61, 0.1);
+}
+
+.admin-shell main article,
+.admin-shell main section.rounded-2xl,
+.admin-shell main div.rounded-2xl.border.bg-white {
+  border-color: #ddd6c8;
+}
+
+.admin-shell main .shadow-sm {
+  box-shadow: 0 8px 24px rgba(25, 34, 27, 0.055);
+}
+
 img {
   -webkit-user-drag: none;
   user-drag: none;
@@ -56,8 +104,8 @@ img {
 }
 /* Verde admin analytics surfaces */
 .admin-dashboard article {
-  border: 1px solid rgba(33, 79, 25, 0.12);
-  background-image: linear-gradient(145deg, #ffffff 25%, #f3f8f1 100%);
+  border: 1px solid #ddd6c8;
+  background-image: linear-gradient(145deg, #fffdf9 20%, #f2eee5 100%);
 }
 
 .admin-dashboard article:first-of-type {
