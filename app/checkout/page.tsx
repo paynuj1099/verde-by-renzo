@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  useEffect,
   useState,
 } from 'react'
 
@@ -29,6 +30,9 @@ import {
   ShoppingBag,
   X,
 } from 'lucide-react'
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
+import { useAuth } from '@/context/AuthContext'
+import { firestore } from '@/lib/firebase'
 
 const WEB3FORMS_ENDPOINT =
   'https://api.web3forms.com/submit'
@@ -42,6 +46,7 @@ type Web3FormsResponse = {
 }
 
 export default function CheckoutPage() {
+  const { user } = useAuth()
   const {
     cart,
     getCartTotal,
@@ -63,6 +68,15 @@ export default function CheckoutPage() {
     isConfirmOpen,
     setIsConfirmOpen,
   ] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    setFormData((current) => ({
+      ...current,
+      name: current.name || user.displayName || '',
+      email: current.email || user.email || '',
+    }))
+  }, [user])
 
   const [
     isSending,
@@ -340,6 +354,17 @@ export default function CheckoutPage() {
           )
         }
 
+        if (user) {
+          await addDoc(collection(firestore, 'users', user.uid, 'orders'), {
+            customer: formData,
+            items: cart,
+            totalItems: getCartCount(),
+            totalAmount: getCartTotal(),
+            status: 'pre-order',
+            createdAt: serverTimestamp(),
+          })
+        }
+
         /*
          * Close confirmation first,
          * then clear the cart after
@@ -480,7 +505,7 @@ export default function CheckoutPage() {
 
             {/* DELIVERY INFORMATION */}
 
-            <div className="rounded-lg bg-white p-6 shadow-md sm:p-8">
+            <div className="order-2 rounded-lg bg-white p-6 shadow-md sm:p-8">
 
               <h2 className="mb-6 font-serif text-2xl text-forest-700">
                 Delivery Information
@@ -654,7 +679,7 @@ export default function CheckoutPage() {
 
             {/* ORDER SUMMARY */}
 
-            <div className="rounded-lg bg-white p-6 shadow-md sm:p-8">
+            <div className="order-1 rounded-lg bg-white p-6 shadow-md sm:p-8">
 
               <h2 className="mb-6 font-serif text-2xl text-forest-700">
                 Order Summary

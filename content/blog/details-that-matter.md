@@ -2,7 +2,6 @@
 title: "The Details That Matter"
 excerpt: "Why small golf accessories deserve the same design attention as the larger pieces in your wardrobe."
 category: "Design"
-image: "/images/divot-tool-set-black.png"
 date: "July 28, 2026"
 publishedAt: "2026-07-28"
 readTime: "3 min read"

@@ -2,7 +2,6 @@
 title: "From Course to Clubhouse"
 excerpt: "Modern golf style is becoming less about strict categories and more about clothing that moves easily between settings."
 category: "Lifestyle"
-image: "/images/performance-polo-ivory.png"
 date: "August 3, 2026"
 publishedAt: "2026-08-03"
 readTime: "4 min read"

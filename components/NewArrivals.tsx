@@ -1,13 +1,13 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
-
-import {
-  products,
-} from '@/data/products'
+import { useProducts } from '@/context/ProductContext'
 
 import {
   getColorClass,
   getColorDisplay,
+  getColorStyle,
   getProductImage,
 } from '@/lib/productUtils'
 
@@ -22,18 +22,17 @@ import {
  *
  * appear here.
  */
-const newArrivals =
-  products
-    .filter(
-      (product) =>
-        product.isNew
-    )
-    .slice(
-      0,
-      8
-    )
-
 export default function NewArrivals() {
+  const { products } = useProducts()
+  const newArrivals = products
+    .filter((product) => product.isNew)
+    .sort((a, b) => {
+      const aOrder = (a as typeof a & { newArrivalOrder?: number }).newArrivalOrder ?? a.id
+      const bOrder = (b as typeof b & { newArrivalOrder?: number }).newArrivalOrder ?? b.id
+      return aOrder - bOrder
+    })
+    .slice(0, 8)
+
   return (
     <section className="bg-white py-12 sm:py-16 lg:py-20">
 
@@ -175,6 +174,7 @@ export default function NewArrivals() {
                               className={`h-2.5 w-2.5 rounded-full border border-gray-300 sm:h-3 sm:w-3 ${getColorClass(
                                 color
                               )}`}
+                              style={getColorStyle(color, product.colorHexes)}
                             />
 
                           )

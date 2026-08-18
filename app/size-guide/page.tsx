@@ -6,6 +6,7 @@ import {
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useSiteAssets } from '@/context/SiteAssetsContext'
 
 import {
   ArrowRight,
@@ -35,7 +36,7 @@ const guides: GuideImage[] = [
     subtitle:
       'Chest, shoulder, body length, and sleeve measurements for our Performance Polo.',
     image:
-      '/images/performance-polo-size-guide.png',
+      'size-guide-polo',
     alt:
       'Verde by Renzo Performance Polo size guide with measurement instructions and size chart',
     icon:
@@ -49,7 +50,7 @@ const guides: GuideImage[] = [
     subtitle:
       'Measure your dominant hand circumference to find the best glove size.',
     image:
-      '/images/golf-glove-size-guide.png',
+      'size-guide-glove',
     alt:
       'Verde by Renzo Golf Glove size guide with hand measurement instructions and size chart',
     icon:
@@ -58,6 +59,7 @@ const guides: GuideImage[] = [
 ]
 
 export default function SizeGuidePage() {
+  const { getAsset } = useSiteAssets()
   const [
     selectedGuide,
     setSelectedGuide,
@@ -209,7 +211,7 @@ export default function SizeGuidePage() {
 
                         <Image
                           src={
-                            guide.image
+                            getAsset(guide.image)
                           }
                           alt={
                             guide.alt
@@ -360,7 +362,7 @@ export default function SizeGuidePage() {
 
               <Image
                 src={
-                  selectedGuide.image
+                    getAsset(selectedGuide.image)
                 }
                 alt={
                   selectedGuide.alt

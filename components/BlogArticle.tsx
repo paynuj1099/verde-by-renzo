@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import Link from 'next/link'
+import SiteAssetImage from '@/components/SiteAssetImage'
 import ReactMarkdown from 'react-markdown'
 
 import {
@@ -85,8 +85,8 @@ export default function BlogArticle({
 
         <div className="relative mx-auto mb-14 aspect-[16/9] max-w-6xl overflow-hidden rounded-2xl bg-gray-100">
 
-          <Image
-            src={post.image}
+          <SiteAssetImage
+            assetId={post.imageAssetId}
             alt={post.title}
             fill
             priority

@@ -2,7 +2,6 @@
 title: "The Golf Cap: More Than a Finishing Touch"
 excerpt: "A simple cap can define an entire golf look while remaining one of the most practical pieces on the course."
 category: "Style"
-image: "/images/golf-cap-green.png"
 date: "August 11, 2026"
 publishedAt: "2026-08-11"
 readTime: "3 min read"

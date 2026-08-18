@@ -15,9 +15,9 @@ import {
 } from 'lucide-react'
 
 import {
-  products,
   Product,
 } from '@/data/products'
+import { useProducts } from '@/context/ProductContext'
 
 const categories = [
   {
@@ -39,6 +39,7 @@ const categories = [
 ]
 
 export default function ShopPage() {
+  const { products } = useProducts()
   const [
     activeCategory,
     setActiveCategory,
@@ -384,20 +385,18 @@ export default function ShopPage() {
                       className="absolute inset-0"
                     >
 
-                      <Image
-                        key={
-                          selectedImage
-                        }
-                        src={
-                          selectedImage
-                        }
-                        alt={`${product.name} - ${getColorDisplay(
-                          selectedColor
-                        )}`}
-                        fill
-                        className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                      />
+                      {selectedImage ? (
+                        <Image
+                          key={selectedImage}
+                          src={selectedImage}
+                          alt={`${product.name} - ${getColorDisplay(selectedColor)}`}
+                          fill
+                          className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                        />
+                      ) : (
+                        <span className="flex h-full items-center justify-center text-sm text-gray-400">No image</span>
+                      )}
 
                     </Link>
 
@@ -539,6 +538,7 @@ export default function ShopPage() {
                                     ? 'scale-110 border-forest-600 ring-2 ring-forest-600/20'
                                     : 'border-gray-300 hover:border-gray-500'
                                 }`}
+                                style={product.colorHexes?.[color] ? { backgroundColor: product.colorHexes[color] } : undefined}
                                 title={`${getColorDisplay(
                                   color
                                 )}${

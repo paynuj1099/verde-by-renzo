@@ -5,13 +5,16 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Menu, X, Search, User, Heart, ShoppingCart } from 'lucide-react'
+import { Menu, X, Search, User, Heart, ShoppingCart, LogOut } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useWishlist } from '@/context/WishlistContext'
 import CartModal from './CartModal'
 import SearchModal from './SearchModal'
+import { useAuth } from '@/context/AuthContext'
 
 export default function Header() {
+  const { user, logout } = useAuth()
+  const [isAccountOpen, setIsAccountOpen] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
@@ -28,6 +31,12 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  const handleLogout = async () => {
+    await logout()
+    setIsAccountOpen(false)
+    window.location.assign('/')
+  }
 
   const isHome = pathname === '/'
 
@@ -93,11 +102,35 @@ export default function Header() {
             }`} aria-label="Search">
               <Search size={20} />
             </button>
-            <Link href="/login" className={`hidden sm:block transition-colors ${
-              isScrolled || !isHome ? 'text-gray-700 hover:text-forest-600' : 'text-white hover:text-gold-300'
-            }`} aria-label="Account">
-              <User size={20} />
-            </Link>
+            {user ? (
+              <div className="relative hidden sm:block">
+                <button
+                  onClick={() => setIsAccountOpen(!isAccountOpen)}
+                  className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-forest-600 text-xs font-semibold text-white ring-2 ring-white/70"
+                  aria-label="Open account menu"
+                >
+                  {user.photoURL ? (
+                    <Image src={user.photoURL} alt={user.displayName || 'Account'} width={32} height={32} className="h-full w-full object-cover" />
+                  ) : (user.displayName || user.email || 'A').charAt(0).toUpperCase()}
+                </button>
+                {isAccountOpen && (
+                  <div className="absolute right-0 mt-3 w-64 rounded-xl border border-gray-100 bg-white p-3 text-gray-700 shadow-xl">
+                    <p className="truncate font-semibold text-forest-800">{user.displayName || 'Verde customer'}</p>
+                    <p className="mb-3 truncate text-xs text-gray-500">{user.email}</p>
+                    <Link href="/profile" onClick={() => setIsAccountOpen(false)} className="block rounded-lg px-3 py-2 text-sm hover:bg-forest-50">My Profile</Link>
+                    <button onClick={handleLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">
+                      <LogOut size={16} /> Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link href="/login" className={`hidden sm:block transition-colors ${
+                isScrolled || !isHome ? 'text-gray-700 hover:text-forest-600' : 'text-white hover:text-gold-300'
+              }`} aria-label="Account">
+                <User size={20} />
+              </Link>
+            )}
             <Link href="/wishlist" className={`hidden sm:block transition-colors relative ${
               isScrolled || !isHome ? 'text-gray-700 hover:text-forest-600' : 'text-white hover:text-gold-300'
             }`} aria-label="Wishlist">
@@ -147,8 +180,8 @@ export default function Header() {
                 >
                   <Search size={20} />
                 </button>
-                <Link href="/login" className="text-gray-700 hover:text-forest-600" aria-label="Account" onClick={() => setIsMenuOpen(false)}>
-                  <User size={20} />
+                <Link href={user ? '/profile' : '/login'} className="flex items-center gap-2 text-gray-700 hover:text-forest-600" aria-label="Account" onClick={() => setIsMenuOpen(false)}>
+                  <User size={20} /> {user && <span className="text-sm">{user.displayName || user.email}</span>}
                 </Link>
                 <Link href="/wishlist" className="text-gray-700 hover:text-forest-600 relative" aria-label="Wishlist" onClick={() => setIsMenuOpen(false)}>
                   <Heart size={20} />
@@ -158,6 +191,11 @@ export default function Header() {
                     </span>
                   )}
                 </Link>
+                {user && (
+                  <button onClick={handleLogout} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700" aria-label="Sign out">
+                    <LogOut size={18} /> Sign out
+                  </button>
+                )}
               </div>
             </div>
           </nav>

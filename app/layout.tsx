@@ -8,6 +8,9 @@ import Chatbot from '@/components/Chatbot'
 import InitialLoader from '@/components/InitialLoader'
 import { CartProvider } from '@/context/CartContext'
 import { WishlistProvider } from '@/context/WishlistContext'
+import { AuthProvider } from '@/context/AuthContext'
+import { ProductProvider } from '@/context/ProductContext'
+import { SiteAssetsProvider } from '@/context/SiteAssetsContext'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -43,16 +46,22 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${montserrat.variable}`}>
       <body className={montserrat.className}>
-        <WishlistProvider>
-          <CartProvider>
-            <InitialLoader>
-              <Header />
-              {children}
-              <Footer />
-              <Chatbot />
-            </InitialLoader>
-          </CartProvider>
-        </WishlistProvider>
+        <AuthProvider>
+          <SiteAssetsProvider>
+            <ProductProvider>
+            <WishlistProvider>
+              <CartProvider>
+                <InitialLoader>
+                  <Header />
+                  {children}
+                  <Footer />
+                  <Chatbot />
+                </InitialLoader>
+              </CartProvider>
+            </WishlistProvider>
+            </ProductProvider>
+          </SiteAssetsProvider>
+        </AuthProvider>
       </body>
     </html>
   )

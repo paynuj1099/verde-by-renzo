@@ -2,9 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, User, Phone, UserPlus } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 export default function SignupPage() {
+  const { signInWithGoogle, signUpWithEmail } = useAuth()
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
@@ -61,32 +65,31 @@ export default function SignupPage() {
     }
 
     setIsLoading(true)
-    
-    // Simulate signup API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Handle signup logic here
-    console.log('Signup:', formData)
-    setIsLoading(false)
-    
-    // Redirect or show success message
-    // window.location.href = '/login?registered=true'
+    try {
+      await signUpWithEmail({
+        name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+      })
+      router.push('/')
+    } catch (error) {
+      const code = (error as { code?: string }).code
+      setErrors({
+        form: code === 'auth/email-already-in-use'
+          ? 'An account already exists for this email.'
+          : code === 'auth/operation-not-allowed'
+            ? 'Email signup is not enabled yet.'
+            : 'Unable to create your account. Please try again.',
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleGoogleSignup = async () => {
-    try {
-      // Google OAuth URL (you'll need to configure this with your Google Client ID)
-      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID'
-      const redirectUri = encodeURIComponent(window.location.origin + '/api/auth/google/callback')
-      const scope = encodeURIComponent('email profile')
-      
-      // Redirect to Google OAuth
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`
-      
-      window.location.href = googleAuthUrl
-    } catch (error) {
-      console.error('Google signup error:', error)
-    }
+    await signInWithGoogle()
+    router.push('/')
   }
 
   const handleChange = (field: string, value: string) => {
@@ -251,6 +254,8 @@ export default function SignupPage() {
                 </label>
                 {errors.terms && <p className="mt-1 text-sm text-red-500">{errors.terms}</p>}
               </div>
+
+              {errors.form && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{errors.form}</p>}
 
               {/* Submit Button */}
               <button

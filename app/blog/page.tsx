@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import Link from 'next/link'
+import SiteAssetImage from '@/components/SiteAssetImage'
 
 import {
   ArrowRight,
@@ -156,10 +156,8 @@ export default function BlogPage() {
             {/* IMAGE */}
             <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 lg:aspect-auto lg:min-h-[520px]">
 
-              <Image
-                src={
-                  featuredPost.image
-                }
+              <SiteAssetImage
+                assetId={featuredPost.imageAssetId}
                 alt={
                   featuredPost.title
                 }
@@ -300,10 +298,8 @@ export default function BlogPage() {
                     {/* IMAGE */}
                     <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
 
-                      <Image
-                        src={
-                          post.image
-                        }
+                      <SiteAssetImage
+                        assetId={post.imageAssetId}
                         alt={
                           post.title
                         }

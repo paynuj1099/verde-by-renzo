@@ -2,7 +2,6 @@
 title: "Performance Meets Everyday Style"
 excerpt: "Why the modern golf polo should feel just as natural at the clubhouse as it does on the course."
 category: "Style"
-image: "/images/performance-meets-everyday-style-blog-cover.png"
 date: "August 18, 2026"
 publishedAt: "2026-08-18"
 readTime: "4 min read"

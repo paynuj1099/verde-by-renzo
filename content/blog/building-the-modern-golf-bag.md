@@ -2,7 +2,6 @@
 title: "Building the Modern Golf Bag"
 excerpt: "A considered selection of accessories can make every round cleaner, easier, and more organized."
 category: "Golf Essentials"
-image: "/images/golf-totebag-green.png"
 date: "August 15, 2026"
 publishedAt: "2026-08-15"
 readTime: "5 min read"

@@ -26,7 +26,7 @@ import {
   Ruler,
 } from 'lucide-react'
 
-import { products } from '@/data/products'
+import { useProducts } from '@/context/ProductContext'
 import { useCart } from '@/context/CartContext'
 import { useWishlist } from '@/context/WishlistContext'
 
@@ -38,6 +38,7 @@ import {
 } from '@/data/productOptions'
 
 export default function ProductDetailPage() {
+  const { products } = useProducts()
   const params = useParams<{
     id: string
   }>()
@@ -222,11 +223,11 @@ export default function ProductDetailPage() {
    * /size-guide#golf-glove
    */
   const sizeGuideHref =
-    product.id === 1
+    product.sizeGuideHref || (product.id === 1
       ? '/size-guide#performance-polo'
       : product.id === 9
         ? '/size-guide#golf-glove'
-        : null
+        : null)
 
   const sizeOptions =
     getProductSizeOptions(
@@ -1047,6 +1048,7 @@ export default function ProductDetailPage() {
                           ? 'scale-110 border-forest-600 ring-2 ring-forest-600/20'
                           : 'border-gray-300 hover:border-gray-500'
                       }`}
+                      style={product.colorHexes?.[color] ? { backgroundColor: product.colorHexes[color] } : undefined}
                       title={
                         getColorDisplay(
                           color

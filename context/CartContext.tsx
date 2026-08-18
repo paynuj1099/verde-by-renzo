@@ -7,15 +7,16 @@ import {
   useState,
 } from 'react'
 
-import {
-  products,
-} from '@/data/products'
+import { getCatalogProducts } from '@/lib/productCatalog'
 
 import {
   GloveHand,
   isValidGloveHand,
   isValidProductSize,
 } from '@/data/productOptions'
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { useAuth } from '@/context/AuthContext'
+import { firestore } from '@/lib/firebase'
 
 export type CartItem = {
   id: number
@@ -170,7 +171,7 @@ const sanitizeStoredCart = (
         )
 
       const product =
-        products.find(
+        getCatalogProducts().find(
           (item) =>
             item.id === id
         )
@@ -244,6 +245,7 @@ export function CartProvider({
   children:
     React.ReactNode
 }) {
+  const { user } = useAuth()
   const [
     cart,
     setCart,
@@ -255,6 +257,7 @@ export function CartProvider({
     isLoaded,
     setIsLoaded,
   ] = useState(false)
+  const [cloudUserId, setCloudUserId] = useState<string | null>(null)
 
   /*
    * Load saved cart once.
@@ -288,6 +291,20 @@ export function CartProvider({
     }
   }, [])
 
+  useEffect(() => {
+    if (!isLoaded || !user) {
+      setCloudUserId(null)
+      return
+    }
+
+    getDoc(doc(firestore, 'users', user.uid, 'data', 'cart'))
+      .then((snapshot) => {
+        if (snapshot.exists()) setCart(sanitizeStoredCart(snapshot.data().items))
+        setCloudUserId(user.uid)
+      })
+      .catch((error) => console.error('Unable to load account cart:', error))
+  }, [isLoaded, user])
+
   /*
    * Persist after the initial
    * localStorage read completes.
@@ -315,11 +332,19 @@ export function CartProvider({
     isLoaded,
   ])
 
+  useEffect(() => {
+    if (!user || cloudUserId !== user.uid) return
+    setDoc(doc(firestore, 'users', user.uid, 'data', 'cart'), {
+      items: cart,
+      updatedAt: serverTimestamp(),
+    }, { merge: true }).catch((error) => console.error('Unable to save account cart:', error))
+  }, [cart, cloudUserId, user])
+
   const addToCart = (
     input: AddToCartInput
   ) => {
     const product =
-      products.find(
+      getCatalogProducts().find(
         (item) =>
           item.id ===
           input.id
@@ -517,7 +542,7 @@ export function CartProvider({
           item
         ) => {
           const product =
-            products.find(
+            getCatalogProducts().find(
               (candidate) =>
                 candidate.id ===
                 item.id

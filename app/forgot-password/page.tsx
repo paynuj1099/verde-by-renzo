@@ -4,21 +4,30 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 export default function ForgotPasswordPage() {
+  const { resetPassword } = useAuth()
   const [email, setEmail] = useState('')
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    setIsLoading(false)
-    setIsSubmitted(true)
+    setError('')
+    try {
+      await resetPassword(email)
+      setIsSubmitted(true)
+    } catch (resetError) {
+      const code = (resetError as { code?: string }).code
+      setError(code === 'auth/operation-not-allowed'
+        ? 'Email/password authentication is not enabled yet.'
+        : 'Unable to send the reset email. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -70,6 +79,8 @@ export default function ForgotPasswordPage() {
                     Enter the email associated with your account
                   </p>
                 </div>
+
+                {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</p>}
 
                 {/* Submit Button */}
                 <button

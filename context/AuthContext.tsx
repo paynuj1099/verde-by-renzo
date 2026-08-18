@@ -1,0 +1,93 @@
+'use client'
+
+import { createContext, useContext, useEffect, useState } from 'react'
+import {
+  GoogleAuthProvider,
+  User,
+  createUserWithEmailAndPassword,
+  getRedirectResult,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile,
+} from 'firebase/auth'
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { firebaseAuth, firestore } from '@/lib/firebase'
+
+type AuthContextValue = {
+  user: User | null
+  loading: boolean
+  signInWithGoogle: () => Promise<void>
+  signInWithEmail: (email: string, password: string) => Promise<void>
+  signUpWithEmail: (details: { name: string; email: string; phone: string; password: string }) => Promise<void>
+  resetPassword: (email: string) => Promise<void>
+  logout: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+
+async function saveUserProfile(user: User) {
+  await setDoc(doc(firestore, 'users', user.uid), {
+    uid: user.uid,
+    email: user.email,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
+    provider: 'google',
+    lastLoginAt: serverTimestamp(),
+  }, { merge: true })
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getRedirectResult(firebaseAuth).then((result) => {
+      if (result?.user) return saveUserProfile(result.user)
+    }).catch((error) => console.error('Google sign-in failed:', error))
+
+    return onAuthStateChanged(firebaseAuth, (nextUser) => {
+      setUser(nextUser)
+      setLoading(false)
+      if (nextUser) saveUserProfile(nextUser).catch(console.error)
+    })
+  }, [])
+
+  const signInWithGoogle = async () => {
+    const result = await signInWithPopup(firebaseAuth, new GoogleAuthProvider())
+    await saveUserProfile(result.user)
+  }
+  const signInWithEmail = async (email: string, password: string) => {
+    const result = await signInWithEmailAndPassword(firebaseAuth, email, password)
+    await saveUserProfile(result.user)
+  }
+  const signUpWithEmail = async ({ name, email, phone, password }: { name: string; email: string; phone: string; password: string }) => {
+    const result = await createUserWithEmailAndPassword(firebaseAuth, email, password)
+    await updateProfile(result.user, { displayName: name })
+    await setDoc(doc(firestore, 'users', result.user.uid), {
+      uid: result.user.uid,
+      email,
+      displayName: name,
+      phone,
+      provider: 'password',
+      createdAt: serverTimestamp(),
+      lastLoginAt: serverTimestamp(),
+    }, { merge: true })
+  }
+  const resetPassword = (email: string) => sendPasswordResetEmail(firebaseAuth, email)
+  const logout = async () => {
+    window.localStorage.removeItem('verde-cart')
+    window.localStorage.removeItem('verde-wishlist')
+    await signOut(firebaseAuth)
+  }
+
+  return <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword, logout }}>{children}</AuthContext.Provider>
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (!context) throw new Error('useAuth must be used inside AuthProvider')
+  return context
+}

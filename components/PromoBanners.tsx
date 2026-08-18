@@ -1,7 +1,11 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSiteAssets } from '@/context/SiteAssetsContext'
 
 export default function PromoBanners() {
+  const { getAsset } = useSiteAssets()
   return (
     <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
       <div className="container">
@@ -11,7 +15,7 @@ export default function PromoBanners() {
             
             {/* Background Image */}
             <Image
-              src="/images/banner-1.png"
+              src={getAsset('promo-apparel')}
               alt="Signature Golf Apparel"
               fill
               className="object-cover object-center"
@@ -48,7 +52,7 @@ export default function PromoBanners() {
 
             {/* Background Image */}
             <Image
-              src="/images/banner-2.png"
+              src={getAsset('promo-accessories')}
               alt="Signature Golf Apparel"
               fill
               className="object-cover object-center"
@@ -83,7 +87,7 @@ export default function PromoBanners() {
               <div className="relative bg-gray-200 rounded-lg overflow-hidden group min-h-[200px] sm:min-h-[240px]">
                 {/* Background Image */}
                 <Image
-                  src="/images/banner-3.png"
+                  src={getAsset('promo-lifestyle')}
                   alt="Signature Golf Apparel"
                   fill
                   className="object-cover object-center"

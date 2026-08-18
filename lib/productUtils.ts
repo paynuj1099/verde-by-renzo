@@ -1,12 +1,10 @@
-import {
-  products,
-  type Product,
-} from '@/data/products'
+import type { Product } from '@/data/products'
+import { getCatalogProducts } from '@/lib/productCatalog'
 
 export function getProductById(
   id: number
 ): Product | undefined {
-  return products.find(
+  return getCatalogProducts().find(
     (product) =>
       product.id === id
   )
@@ -77,7 +75,7 @@ export function getColorDisplay(
 
   return (
     colors[color] ||
-    color
+    color.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
   )
 }
 
@@ -123,4 +121,13 @@ export function getColorClass(
     classes[color] ||
     'bg-gray-400'
   )
+}
+
+export function getColorStyle(
+  color: string,
+  colorHexes?: Record<string, string>
+): { backgroundColor?: string } {
+  return colorHexes?.[color]
+    ? { backgroundColor: colorHexes[color] }
+    : {}
 }

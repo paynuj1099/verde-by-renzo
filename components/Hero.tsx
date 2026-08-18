@@ -7,10 +7,11 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useSiteAssets } from '@/context/SiteAssetsContext'
 
 const slides = [
   {
-    image: '/images/hero-background.png',
+    imageId: 'hero-primary',
 
     // Product destination
     productId: 1,
@@ -27,7 +28,7 @@ const slides = [
   },
 
   {
-    image: '/images/hero-background-2.png',
+    imageId: 'hero-secondary',
 
     // Product destination
     productId: 1,
@@ -46,6 +47,7 @@ const slides = [
 ]
 
 export default function Hero() {
+  const { getAsset } = useSiteAssets()
   const [
     slideIndex,
     setSlideIndex,
@@ -68,7 +70,7 @@ export default function Hero() {
   }
 
   const {
-    image,
+    imageId,
     caption,
     productId,
     color,
@@ -81,7 +83,7 @@ export default function Hero() {
       <div className="absolute inset-0 min-h-screen">
 
         <Image
-          src={image}
+          src={getAsset(imageId)}
           alt={caption.title}
           fill
           sizes="100vw"

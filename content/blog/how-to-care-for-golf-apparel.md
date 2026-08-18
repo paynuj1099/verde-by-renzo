@@ -2,7 +2,6 @@
 title: "How to Care for Your Golf Apparel"
 excerpt: "Simple habits can help performance pieces maintain their shape, appearance, and comfort for longer."
 category: "Care Guide"
-image: "/images/performance-polo-black.png"
 date: "August 7, 2026"
 publishedAt: "2026-08-07"
 readTime: "4 min read"

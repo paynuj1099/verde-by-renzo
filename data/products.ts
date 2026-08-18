@@ -5,6 +5,8 @@ export type Product = {
   price: number
   colors: string[]
   images: Record<string, string>
+  imageFileIds?: Record<string, string>
+  colorHexes?: Record<string, string>
 
   /*
    * Optional image used specifically
@@ -15,6 +17,7 @@ export type Product = {
    * normal product image.
    */
   newArrivalImage?: string
+  newArrivalFileId?: string
 
   description: string
   longDescription: string

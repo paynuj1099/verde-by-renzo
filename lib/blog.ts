@@ -13,7 +13,7 @@ export type BlogPostMeta = {
   title: string
   excerpt: string
   category: string
-  image: string
+  imageAssetId: string
   date: string
   publishedAt: string
   readTime: string
@@ -166,11 +166,7 @@ function parseBlogFile(
         ? data.category
         : 'Journal',
 
-    image:
-      typeof data.image ===
-      'string'
-        ? data.image
-        : '/images/performance-polo-green.png',
+    imageAssetId: 'blog-placeholder',
 
     date:
       typeof data.date ===

@@ -59,9 +59,6 @@ export async function generateMetadata({
       description:
         post.excerpt,
 
-      images: [
-        post.image,
-      ],
     },
   }
 }

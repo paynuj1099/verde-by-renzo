@@ -10,6 +10,9 @@ import React, {
 import {
   getProductById,
 } from '@/lib/productUtils'
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { useAuth } from '@/context/AuthContext'
+import { firestore } from '@/lib/firebase'
 
 export interface WishlistItem {
   id: number
@@ -77,6 +80,7 @@ export function WishlistProvider({
 }: {
   children: React.ReactNode
 }) {
+  const { user } = useAuth()
   const [
     wishlist,
     setWishlist,
@@ -88,6 +92,7 @@ export function WishlistProvider({
     hasLoaded,
     setHasLoaded,
   ] = useState(false)
+  const [cloudUserId, setCloudUserId] = useState<string | null>(null)
 
   /*
    * ============================
@@ -192,6 +197,23 @@ export function WishlistProvider({
     setHasLoaded(true)
   }, [])
 
+  useEffect(() => {
+    if (!hasLoaded || !user) {
+      setCloudUserId(null)
+      return
+    }
+
+    getDoc(doc(firestore, 'users', user.uid, 'data', 'wishlist'))
+      .then((snapshot) => {
+        if (snapshot.exists() && Array.isArray(snapshot.data().items)) {
+          const items = snapshot.data().items as WishlistItem[]
+          setWishlist(items.filter((item) => getProductById(item.id) && Array.isArray(item.colors)))
+        }
+        setCloudUserId(user.uid)
+      })
+      .catch((error) => console.error('Unable to load account wishlist:', error))
+  }, [hasLoaded, user])
+
   /*
    * ============================
    * SAVE WISHLIST
@@ -221,6 +243,14 @@ export function WishlistProvider({
     wishlist,
     hasLoaded,
   ])
+
+  useEffect(() => {
+    if (!user || cloudUserId !== user.uid) return
+    setDoc(doc(firestore, 'users', user.uid, 'data', 'wishlist'), {
+      items: wishlist,
+      updatedAt: serverTimestamp(),
+    }, { merge: true }).catch((error) => console.error('Unable to save account wishlist:', error))
+  }, [wishlist, cloudUserId, user])
 
   /*
    * ============================

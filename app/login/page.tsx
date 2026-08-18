@@ -3,44 +3,40 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
 
 export default function LoginPage() {
+  const { signInWithGoogle, signInWithEmail } = useAuth()
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [loginError, setLoginError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    
-    // Simulate login API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Handle login logic here
-    console.log('Login:', { email, password, rememberMe })
-    setIsLoading(false)
-    
-    // Redirect or show success message
-    // window.location.href = '/shop'
+    setLoginError('')
+    try {
+      await signInWithEmail(email, password)
+      router.push('/')
+    } catch (error) {
+      const code = (error as { code?: string }).code
+      setLoginError(code === 'auth/operation-not-allowed'
+        ? 'Email login is not enabled yet.'
+        : 'Incorrect email or password.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleGoogleLogin = async () => {
-    try {
-      // Google OAuth URL (you'll need to configure this with your Google Client ID)
-      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID'
-      const redirectUri = encodeURIComponent(window.location.origin + '/api/auth/google/callback')
-      const scope = encodeURIComponent('email profile')
-      
-      // Redirect to Google OAuth
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`
-      
-      window.location.href = googleAuthUrl
-    } catch (error) {
-      console.error('Google login error:', error)
-    }
+    await signInWithGoogle()
+    router.push('/')
   }
 
   return (
@@ -120,6 +116,8 @@ export default function LoginPage() {
                   Forgot password?
                 </Link>
               </div>
+
+              {loginError && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{loginError}</p>}
 
               {/* Submit Button */}
               <button
