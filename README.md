@@ -4,6 +4,10 @@ A modern, premium golf apparel and accessories e-commerce website built with Nex
 
 VERDE by Renzo delivers a clean and sophisticated shopping experience featuring product variants, dedicated product imagery, wishlist functionality, persistent cart management, product search, pre-order checkout, blog content, and responsive layouts.
 
+<img width="1884" height="947" alt="image" src="https://github.com/user-attachments/assets/b90179f4-95d9-4c4b-a553-7c176c1617e6" />
+
+
+
 ---
 
 ## Design
