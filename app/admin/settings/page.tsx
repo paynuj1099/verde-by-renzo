@@ -29,22 +29,23 @@ import {
   CircleDollarSign,
   KeyRound,
   Laptop,
-  LogOut,
   MapPin,
   MoreVertical,
   ImageIcon,
+  Github,
+  Link2,
   Package,
   Phone,
   RotateCcw,
   Save,
   ShieldCheck,
   Smartphone,
+  Unlink,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { firebaseAuth, firestore } from "@/lib/firebase";
-import AdminPageSkeleton from "@/components/AdminPageSkeleton";
 import AdminToast from "@/components/AdminToast";
 import AdminConfirmModal from "@/components/AdminConfirmModal";
 import AdminImageCropModal from "@/components/AdminImageCropModal";
@@ -78,6 +79,8 @@ type ConnectedDevice = {
   online: boolean;
   lastSeen?: Timestamp;
 };
+
+type LoginProvider = "google" | "github" | "password" | null;
 
 function OrderAccordion({
   order,
@@ -206,8 +209,153 @@ function OrderAccordion({
   );
 }
 
+
+function AdminSettingsSkeleton() {
+  const pulse = "animate-pulse bg-[#e8e4da]";
+
+  return (
+    <main className="min-h-screen bg-[#f4f7f2] py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto w-full max-w-[1480px] px-3 sm:px-5 lg:px-8">
+        <header className="mb-5 sm:mb-7">
+          <div className={`h-3 w-24 rounded ${pulse}`} />
+          <div className={`mt-3 h-8 w-36 rounded-lg ${pulse}`} />
+          <div className={`mt-2 h-4 w-72 max-w-full rounded ${pulse}`} />
+        </header>
+
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(300px,.75fr)]">
+          <div className="contents">
+            <section className="min-w-0 overflow-hidden rounded-2xl border border-[#ddd7ca] bg-white shadow-sm lg:col-start-1 lg:row-start-1">
+              <div className={`h-28 sm:h-36 lg:h-44 ${pulse}`} />
+
+              <div className="relative px-4 pb-6 sm:px-7 sm:pb-7">
+                <div className="min-h-36 pb-6 pt-20 sm:min-h-40 sm:pb-7 sm:pl-48 sm:pt-5">
+                  <div
+                    className={`absolute -top-9 left-4 h-24 w-24 rounded-full border-4 border-white sm:-top-10 sm:left-9 sm:h-36 sm:w-36 sm:border-[5px] ${pulse}`}
+                  />
+
+                  <div className="space-y-3">
+                    <div className={`h-7 w-48 max-w-full rounded ${pulse}`} />
+                    <div className={`h-4 w-56 max-w-full rounded ${pulse}`} />
+                    <div className={`h-4 w-40 max-w-full rounded ${pulse}`} />
+                    <div className={`h-6 w-24 rounded-full ${pulse}`} />
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 pt-6">
+                  <div className="mb-5 flex items-center gap-3">
+                    <div className={`h-5 w-5 rounded ${pulse}`} />
+                    <div className="space-y-2">
+                      <div className={`h-5 w-36 rounded ${pulse}`} />
+                      <div className={`h-3 w-56 max-w-full rounded ${pulse}`} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+                    <div className="sm:col-span-2">
+                      <div className={`mb-2 h-4 w-24 rounded ${pulse}`} />
+                      <div className={`h-12 w-full rounded-xl ${pulse}`} />
+                    </div>
+
+                    <div>
+                      <div className={`mb-2 h-4 w-24 rounded ${pulse}`} />
+                      <div className={`h-12 w-full rounded-xl ${pulse}`} />
+                    </div>
+
+                    <div>
+                      <div className={`mb-2 h-4 w-24 rounded ${pulse}`} />
+                      <div className={`h-12 w-full rounded-xl ${pulse}`} />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex border-t border-gray-100 pt-5 sm:mt-7 sm:justify-end">
+                    <div className={`h-11 w-full rounded-xl sm:w-36 ${pulse}`} />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="min-w-0 rounded-2xl border border-[#ddd7ca] bg-white p-4 shadow-sm sm:p-7 lg:col-span-2 lg:row-start-2">
+              <div className="mb-5 flex flex-col items-start gap-3 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`h-5 w-5 rounded ${pulse}`} />
+                  <div className="space-y-2">
+                    <div className={`h-5 w-28 rounded ${pulse}`} />
+                    <div className={`h-3 w-48 rounded ${pulse}`} />
+                  </div>
+                </div>
+                <div className={`h-7 w-20 rounded-full ${pulse}`} />
+              </div>
+
+              <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className={`h-20 rounded-xl ${pulse}`} />
+                <div className={`h-20 rounded-xl ${pulse}`} />
+              </div>
+
+              <div className="space-y-3">
+                {[0, 1, 2].map((item) => (
+                  <div
+                    key={item}
+                    className="flex items-center gap-4 rounded-xl border border-gray-200 p-4"
+                  >
+                    <div className={`h-12 w-12 flex-none rounded-lg ${pulse}`} />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className={`h-4 w-1/3 rounded ${pulse}`} />
+                      <div className={`h-3 w-1/2 rounded ${pulse}`} />
+                    </div>
+                    <div className={`h-5 w-20 rounded ${pulse}`} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <aside className="grid min-h-0 grid-cols-1 gap-4 lg:col-start-2 lg:row-start-1 lg:grid-rows-[auto_auto_minmax(0,1fr)]">
+            {[0, 1, 2].map((section) => (
+              <section
+                key={section}
+                className="rounded-2xl border border-[#ddd7ca] bg-white p-4 shadow-sm"
+              >
+                <div className="mb-4 flex items-center gap-3">
+                  <div className={`h-5 w-5 rounded ${pulse}`} />
+                  <div className="space-y-2">
+                    <div className={`h-5 w-36 rounded ${pulse}`} />
+                    <div className={`h-3 w-48 max-w-full rounded ${pulse}`} />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {[0, 1, 2].map((row) => (
+                    <div
+                      key={row}
+                      className="flex items-center gap-3 rounded-xl bg-[#f5f3ed] p-3 sm:p-4"
+                    >
+                      <div className={`h-10 w-10 flex-none rounded-lg ${pulse}`} />
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <div className={`h-4 w-24 rounded ${pulse}`} />
+                        <div className={`h-3 w-32 max-w-full rounded ${pulse}`} />
+                      </div>
+                      <div className={`h-8 w-20 rounded-lg ${pulse}`} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </aside>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export default function AdminSettingsPage() {
-  const { user, loading, logout } = useAuth();
+  const {
+    user,
+    loading,
+    connectedProviders,
+    linkGoogleAccount,
+    linkGithubAccount,
+    unlinkProvider,
+  } = useAuth();
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [phone, setPhone] = useState("");
@@ -227,6 +375,8 @@ export default function AdminSettingsPage() {
   const [coverPositionX, setCoverPositionX] = useState(50);
   const [coverPositionY, setCoverPositionY] = useState(50);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const profileCardRef = useRef<HTMLFormElement>(null);
+  const [profileCardHeight, setProfileCardHeight] = useState<number | null>(null);
   const coverDragRef = useRef<{
     startX: number;
     startY: number;
@@ -234,6 +384,7 @@ export default function AdminSettingsPage() {
     positionY: number;
   } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [passwordActionLoading, setPasswordActionLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [newOrderAlerts, setNewOrderAlerts] = useState(true);
   const [statusAlerts, setStatusAlerts] = useState(true);
@@ -246,6 +397,13 @@ export default function AdminSettingsPage() {
     [],
   );
   const [presenceNow, setPresenceNow] = useState(Date.now());
+  const [loginProvider, setLoginProvider] = useState<LoginProvider>(null);
+  const [accountAction, setAccountAction] = useState<
+    "google" | "github" | "unlink" | null
+  >(null);
+  const [confirmUnlinkProvider, setConfirmUnlinkProvider] = useState<
+    "google.com" | "github.com" | "password" | null
+  >(null);
 
   useEffect(() => {
     if (loading) return;
@@ -255,6 +413,20 @@ export default function AdminSettingsPage() {
     }
     setDisplayName(user.displayName || "");
     setPhotoURL(user.photoURL || "");
+
+    const sessionProvider =
+      typeof window !== "undefined"
+        ? window.sessionStorage.getItem("verde-login-provider")
+        : null;
+
+    if (
+      sessionProvider === "google" ||
+      sessionProvider === "github" ||
+      sessionProvider === "password"
+    ) {
+      setLoginProvider(sessionProvider);
+    }
+
     getDoc(doc(firestore, "users", user.uid))
       .then((snapshot) => {
         const data = snapshot.data();
@@ -264,8 +436,29 @@ export default function AdminSettingsPage() {
         setCoverPhotoFileId(String(data?.coverPhotoFileId || ""));
         setCoverPositionX(Number(data?.coverPositionX ?? 50));
         setCoverPositionY(Number(data?.coverPositionY ?? 50));
+
+        if (
+          sessionProvider !== "google" &&
+          sessionProvider !== "github" &&
+          sessionProvider !== "password"
+        ) {
+          const storedProvider = data?.provider;
+
+          if (
+            storedProvider === "google" ||
+            storedProvider === "github" ||
+            storedProvider === "password"
+          ) {
+            setLoginProvider(storedProvider);
+          } else {
+            setLoginProvider(null);
+          }
+        }
       })
-      .catch(() => setPhotoFileId(""));
+      .catch(() => {
+        setPhotoFileId("");
+        setLoginProvider(null);
+      });
     getIdTokenResult(user, true)
       .then((token) => setAllowed(token.claims.admin === true))
       .catch(() => setAllowed(false));
@@ -279,6 +472,33 @@ export default function AdminSettingsPage() {
     },
     [cropSourcePreview, pendingCoverPreview, pendingPhotoPreview],
   );
+
+  useEffect(() => {
+    const profileCard = profileCardRef.current;
+    if (!profileCard) return;
+
+    const syncProfileHeight = () => {
+      if (window.innerWidth < 1024) {
+        setProfileCardHeight(null);
+        return;
+      }
+
+      setProfileCardHeight(
+        Math.ceil(profileCard.getBoundingClientRect().height),
+      );
+    };
+
+    syncProfileHeight();
+
+    const resizeObserver = new ResizeObserver(syncProfileHeight);
+    resizeObserver.observe(profileCard);
+    window.addEventListener("resize", syncProfileHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", syncProfileHeight);
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -620,25 +840,103 @@ export default function AdminSettingsPage() {
 
   const sendReset = async () => {
     if (!user?.email) return;
-    setSaving(true);
+
+    const passwordIsConnected =
+      connectedProviders.includes("password");
+
+    setPasswordActionLoading(true);
+
     try {
       await sendPasswordResetEmail(firebaseAuth, user.email);
-      setMessage(`Password reset email sent to ${user.email}.`);
+
+      setMessage(
+        passwordIsConnected
+          ? `Password reset email sent to ${user.email}.`
+          : `Password setup email sent to ${user.email}. Open the link to create a password for this account.`,
+      );
     } catch (error) {
       console.error(error);
-      setMessage("Unable to send the password reset email.");
+
+      setMessage(
+        passwordIsConnected
+          ? "Unable to send the password reset email."
+          : "Unable to send the password setup email.",
+      );
     } finally {
-      setSaving(false);
+      setPasswordActionLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    window.location.assign("/");
+  const connectGoogleAccount = async () => {
+    setAccountAction("google");
+    try {
+      await linkGoogleAccount();
+      setMessage("Google account connected successfully.");
+    } catch (error) {
+      console.error("Unable to connect Google account:", error);
+      const code = (error as { code?: string }).code;
+      setMessage(
+        code === "auth/credential-already-in-use"
+          ? "Unable to connect Google. That Google account is already linked to another Verde account."
+          : error instanceof Error
+            ? error.message
+            : "Unable to connect Google account.",
+      );
+    } finally {
+      setAccountAction(null);
+    }
   };
 
-  if (loading || allowed === null)
-    return <AdminPageSkeleton variant="catalog" />;
+  const connectGithubAccount = async () => {
+    setAccountAction("github");
+    try {
+      await linkGithubAccount();
+      setMessage("GitHub account connected successfully.");
+    } catch (error) {
+      console.error("Unable to connect GitHub account:", error);
+      const code = (error as { code?: string }).code;
+      setMessage(
+        code === "auth/credential-already-in-use"
+          ? "Unable to connect GitHub. That GitHub account is already linked to another Verde account."
+          : error instanceof Error
+            ? error.message
+            : "Unable to connect GitHub account.",
+      );
+    } finally {
+      setAccountAction(null);
+    }
+  };
+
+  const confirmAccountUnlink = async () => {
+    if (!confirmUnlinkProvider) return;
+
+    const providerId = confirmUnlinkProvider;
+    setConfirmUnlinkProvider(null);
+    setAccountAction("unlink");
+
+    try {
+      await unlinkProvider(providerId);
+
+      setMessage(
+        providerId === "google.com"
+          ? "Google account disconnected."
+          : providerId === "github.com"
+            ? "GitHub account disconnected."
+            : "Email & Password sign-in disconnected.",
+      );
+    } catch (error) {
+      console.error("Unable to disconnect account:", error);
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to disconnect the selected account.",
+      );
+    } finally {
+      setAccountAction(null);
+    }
+  };
+
+  if (loading || allowed === null) return <AdminSettingsSkeleton />;
   if (!allowed)
     return (
       <main className="min-h-screen bg-[#f4f7f2] pt-32 text-center">
@@ -666,14 +964,23 @@ export default function AdminSettingsPage() {
       ? ""
       : window.localStorage.getItem(DEVICE_ID_KEY) || "";
 
+  const loginProviderLabel =
+    loginProvider === "google"
+      ? "Google"
+      : loginProvider === "github"
+        ? "GitHub"
+        : loginProvider === "password"
+          ? "Email and password"
+          : "Linked account";
+
   return (
-    <main className="min-h-screen bg-[#f4f7f2] py-6 sm:py-8">
-      <div className="mx-auto w-full max-w-[1480px] px-5 lg:px-8">
-        <header className="mb-7">
+    <main className="min-h-screen bg-[#f4f7f2] py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto w-full max-w-[1480px] px-3 sm:px-5 lg:px-8">
+        <header className="mb-5 sm:mb-7">
           <p className="text-xs font-semibold uppercase tracking-[.2em] text-gold-600">
             Administration
           </p>
-          <h1 className="font-serif text-3xl text-forest-900">Settings</h1>
+          <h1 className="font-serif text-2xl text-forest-900 sm:text-3xl">Settings</h1>
           <p className="mt-1 text-sm text-gray-500">
             Manage your administrator profile and account security.
           </p>
@@ -708,6 +1015,27 @@ export default function AdminSettingsPage() {
           onConfirm={resetProfilePhoto}
           onCancel={() => setConfirmResetPhoto(false)}
         />
+        <AdminConfirmModal
+          open={confirmUnlinkProvider !== null}
+          title={`Disconnect ${
+            confirmUnlinkProvider === "google.com"
+              ? "Google"
+              : confirmUnlinkProvider === "github.com"
+                ? "GitHub"
+                : "Email & Password"
+          }?`}
+          description={`You will no longer be able to sign in to this Verde account using ${
+            confirmUnlinkProvider === "google.com"
+              ? "Google"
+              : confirmUnlinkProvider === "github.com"
+                ? "GitHub"
+                : "your email and password"
+          }. Your account data and other connected sign-in methods will remain unchanged.`}
+          confirmLabel="Disconnect account"
+          tone="danger"
+          onConfirm={confirmAccountUnlink}
+          onCancel={() => setConfirmUnlinkProvider(null)}
+        />
         <AdminImageCropModal
           file={cropSourceFile}
           previewUrl={cropSourcePreview}
@@ -729,11 +1057,12 @@ export default function AdminSettingsPage() {
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(300px,.75fr)]">
           <div className="contents">
             <form
+              ref={profileCardRef}
               onSubmit={requestProfileSave}
-              className="overflow-hidden rounded-2xl border border-[#ddd7ca] bg-white shadow-sm lg:col-start-1 lg:row-start-1"
+              className="min-w-0 overflow-hidden rounded-2xl border border-[#ddd7ca] bg-white shadow-sm lg:col-start-1 lg:row-start-1"
             >
               <div
-                className={`relative h-36 overflow-hidden bg-[radial-gradient(circle_at_75%_20%,rgba(210,166,80,.3),transparent_28%),linear-gradient(135deg,#101c15,#294b32)] bg-cover bg-center sm:h-44 ${pendingCover ? "cursor-move touch-none" : ""}`}
+                className={`relative h-28 overflow-hidden sm:h-36 lg:h-44 bg-[radial-gradient(circle_at_75%_20%,rgba(210,166,80,.3),transparent_28%),linear-gradient(135deg,#101c15,#294b32)] bg-cover bg-center sm:h-44 ${pendingCover ? "cursor-move touch-none" : ""}`}
                 onPointerDown={(event) => {
                   if (!pendingCover) return;
                   event.currentTarget.setPointerCapture(event.pointerId);
@@ -795,10 +1124,10 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
 
-              <div className="relative px-5 pb-7 sm:px-7">
-                <div className="min-h-40 pb-7 pl-4 pt-32 sm:pl-48 sm:pt-5">
-                  <div className="absolute -top-10 left-7 h-36 w-36 sm:left-9">
-                    <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-[5px] border-white bg-forest-100 text-4xl font-semibold text-forest-700 shadow-md">
+              <div className="relative px-4 pb-6 sm:px-7 sm:pb-7">
+                <div className="min-h-36 pb-6 pt-20 sm:min-h-40 sm:pb-7 sm:pl-48 sm:pt-5">
+                  <div className="absolute -top-9 left-4 h-24 w-24 sm:-top-10 sm:left-9 sm:h-36 sm:w-36">
+                    <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-4 border-white bg-forest-100 text-2xl font-semibold text-forest-700 shadow-md sm:border-[5px] sm:text-4xl">
                       {pendingPhotoPreview || photoURL ? (
                         <img
                           src={pendingPhotoPreview || photoURL}
@@ -812,7 +1141,7 @@ export default function AdminSettingsPage() {
                       )}
                     </div>
                     <label
-                      className={`absolute bottom-1 right-1 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-4 border-white bg-forest-700 text-white shadow-lg transition hover:bg-forest-800 ${saving ? "pointer-events-none opacity-50" : ""}`}
+                      className={`absolute bottom-0 right-0 flex h-8 w-8 sm:bottom-1 sm:right-1 sm:h-10 sm:w-10 cursor-pointer items-center justify-center rounded-full border-4 border-white bg-forest-700 text-white shadow-lg transition hover:bg-forest-800 ${saving ? "pointer-events-none opacity-50" : ""}`}
                       aria-label="Choose a new profile photo"
                       title="Edit profile photo"
                     >
@@ -885,11 +1214,15 @@ export default function AdminSettingsPage() {
                     }}
                   />
                   <div className="min-w-0">
-                    <h2 className="truncate font-serif text-2xl text-forest-950">
+                    <h2 className="break-words font-serif text-xl text-forest-950 sm:truncate sm:text-2xl">
                       {displayName || "Administrator"}
                     </h2>
-                    <p className="truncate text-sm text-gray-500">
+                    <p className="break-all text-xs text-gray-500 sm:truncate sm:text-sm">
                       {user?.email}
+                    </p>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-gray-500">
+                      <ShieldCheck size={13} className="text-forest-600" />
+                      Signed in with {loginProviderLabel}
                     </p>
                     <span className="mt-2 inline-flex rounded-full bg-forest-50 px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-forest-700">
                       Administrator
@@ -909,7 +1242,7 @@ export default function AdminSettingsPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
                     <label className="block text-sm font-medium text-gray-700 sm:col-span-2">
                       Display name
                       <input
@@ -960,10 +1293,10 @@ export default function AdminSettingsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="mt-7 flex justify-end border-t border-gray-100 pt-5">
+                  <div className="mt-6 flex border-t border-gray-100 pt-5 sm:mt-7 sm:justify-end">
                     <button
                       disabled={saving || !displayName.trim()}
-                      className="flex items-center gap-2 rounded-xl bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-800 disabled:opacity-50"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-800 disabled:opacity-50 sm:w-auto"
                     >
                       <Save size={17} /> {saving ? "Saving..." : "Save changes"}
                     </button>
@@ -972,8 +1305,8 @@ export default function AdminSettingsPage() {
               </div>
             </form>
 
-            <section className="rounded-2xl border border-[#ddd7ca] bg-white p-5 shadow-sm sm:p-7 lg:col-span-2 lg:row-start-2">
-              <div className="mb-5 flex items-center justify-between gap-4 border-b border-gray-100 pb-5">
+            <section className="min-w-0 rounded-2xl border border-[#ddd7ca] bg-white p-4 shadow-sm sm:p-7 lg:col-span-2 lg:row-start-2">
+              <div className="mb-5 flex flex-col items-start gap-3 border-b border-gray-100 pb-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="flex items-center gap-3">
                   <Package size={20} className="text-gold-600" />
                   <div>
@@ -989,8 +1322,8 @@ export default function AdminSettingsPage() {
                   {orders.length} {orders.length === 1 ? "order" : "orders"}
                 </span>
               </div>
-              <div className="mb-5 grid gap-3 sm:grid-cols-2">
-                <div className="flex items-center gap-3 rounded-xl bg-[#f5f3ed] p-4">
+              <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="flex items-center gap-3 rounded-xl bg-[#f5f3ed] p-3 sm:p-4">
                   <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-gold-700 shadow-sm">
                     <CircleDollarSign size={19} />
                   </span>
@@ -1003,7 +1336,7 @@ export default function AdminSettingsPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 rounded-xl bg-[#f5f3ed] p-4">
+                <div className="flex items-center gap-3 rounded-xl bg-[#f5f3ed] p-3 sm:p-4">
                   <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-emerald-700 shadow-sm">
                     <CheckCircle2 size={19} />
                   </span>
@@ -1063,11 +1396,11 @@ export default function AdminSettingsPage() {
                     </div>
                   ))}
                   {orders.length > orderPageSize && (
-                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                    <div className="mt-5 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                       <p className="text-sm text-gray-500">
                         Page {currentOrderPage} of {orderPageCount}
                       </p>
-                      <div className="flex gap-2">
+                      <div className="flex max-w-full flex-wrap gap-2">
                         <button
                           type="button"
                           disabled={currentOrderPage === 1}
@@ -1129,9 +1462,202 @@ export default function AdminSettingsPage() {
             </section>
           </div>
 
-          <aside className="space-y-5 lg:col-start-2 lg:row-start-1">
-            <section className="rounded-2xl border border-[#ddd7ca] bg-white p-5 shadow-sm">
-              <div className="mb-5 flex items-center gap-3">
+          <aside
+            className="grid min-h-0 grid-cols-1 gap-4 lg:col-start-2 lg:row-start-1 lg:grid-rows-[auto_auto_minmax(0,1fr)] lg:h-[var(--profile-card-height)]"
+            style={
+              profileCardHeight
+                ? ({ "--profile-card-height": `${profileCardHeight}px` } as React.CSSProperties)
+                : undefined
+            }
+          >
+<section className="min-h-0 rounded-2xl border border-[#ddd7ca] bg-white p-4 shadow-sm">
+              <div className="mb-4 flex items-center gap-3">
+                <Link2 size={20} className="text-gold-600" />
+                <div>
+                  <h2 className="font-serif text-lg text-forest-900">
+                    Connected accounts
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    Manage the accounts you can use to sign in.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex flex-col items-stretch gap-3 rounded-xl border border-gray-100 bg-[#f5f3ed] p-3 sm:flex-row sm:items-center sm:p-4">
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white shadow-sm">
+                    <svg
+                      className="h-5 w-5"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fill="#4285F4"
+                        d="M21.6 12.23c0-.71-.06-1.24-.2-1.79H12v3.26h5.52a4.72 4.72 0 0 1-2.05 3.1v2.67h3.32c1.95-1.79 3.07-4.43 3.07-7.24Z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 22c2.7 0 4.96-.89 6.61-2.42l-3.32-2.67c-.89.6-2.03.96-3.29.96-2.53 0-4.68-1.71-5.45-4.01H3.12v2.75A10 10 0 0 0 12 22Z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M6.55 13.86A6.02 6.02 0 0 1 6.23 12c0-.65.11-1.28.32-1.86V7.39H3.12A10 10 0 0 0 2 12c0 1.65.4 3.21 1.12 4.61l3.43-2.75Z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 6.13c1.47 0 2.79.51 3.83 1.5l2.87-2.88A9.67 9.67 0 0 0 12 2a10 10 0 0 0-8.88 5.39l3.43 2.75c.77-2.3 2.92-4.01 5.45-4.01Z"
+                      />
+                    </svg>
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-forest-900">
+                      Google
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {connectedProviders.includes("google.com")
+                        ? "Connected to this Verde account"
+                        : "Not connected"}
+                    </p>
+                  </div>
+
+                  {connectedProviders.includes("google.com") ? (
+                    <button
+                      type="button"
+                      disabled={
+                        accountAction !== null ||
+                        connectedProviders.length <= 1
+                      }
+                      onClick={() => setConfirmUnlinkProvider("google.com")}
+                      title={
+                        connectedProviders.length <= 1
+                          ? "Connect another sign-in method before disconnecting Google."
+                          : "Disconnect Google"
+                      }
+                      className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                    >
+                      <Unlink size={14} />
+                      Disconnect
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={accountAction !== null}
+                      onClick={connectGoogleAccount}
+                      className="w-full rounded-lg bg-forest-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-forest-800 disabled:opacity-50 sm:w-auto"
+                    >
+                      {accountAction === "google" ? "Connecting..." : "Connect"}
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-col items-stretch gap-3 rounded-xl border border-gray-100 bg-[#f5f3ed] p-3 sm:flex-row sm:items-center sm:p-4">
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white text-[#24292f] shadow-sm">
+                    <Github size={21} />
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-forest-900">
+                      GitHub
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {connectedProviders.includes("github.com")
+                        ? "Connected to this Verde account"
+                        : "Not connected"}
+                    </p>
+                  </div>
+
+                  {connectedProviders.includes("github.com") ? (
+                    <button
+                      type="button"
+                      disabled={
+                        accountAction !== null ||
+                        connectedProviders.length <= 1
+                      }
+                      onClick={() => setConfirmUnlinkProvider("github.com")}
+                      title={
+                        connectedProviders.length <= 1
+                          ? "Connect another sign-in method before disconnecting GitHub."
+                          : "Disconnect GitHub"
+                      }
+                      className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                    >
+                      <Unlink size={14} />
+                      Disconnect
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={accountAction !== null}
+                      onClick={connectGithubAccount}
+                      className="w-full rounded-lg bg-forest-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-forest-800 disabled:opacity-50 sm:w-auto"
+                    >
+                      {accountAction === "github" ? "Connecting..." : "Connect"}
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-col items-stretch gap-3 rounded-xl border border-gray-100 bg-[#f5f3ed] p-3 sm:flex-row sm:items-center sm:p-4">
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white text-forest-700 shadow-sm">
+                    <KeyRound size={20} />
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-forest-900">
+                      Email &amp; Password
+                    </p>
+                    <p className="truncate text-xs text-gray-500">
+                      {connectedProviders.includes("password")
+                        ? `Connected${user?.email ? ` · ${user.email}` : ""}`
+                        : "Not connected"}
+                    </p>
+                  </div>
+
+                  {connectedProviders.includes("password") ? (
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                      <button
+                        type="button"
+                        disabled={
+                          accountAction !== null ||
+                          connectedProviders.length <= 1
+                        }
+                        onClick={() => setConfirmUnlinkProvider("password")}
+                        title={
+                          connectedProviders.length <= 1
+                            ? "Add another sign-in method before disconnecting Email & Password."
+                            : "Disconnect Email & Password"
+                        }
+                        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                      >
+                        <Unlink size={14} />
+                        Disconnect
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={passwordActionLoading}
+                      onClick={sendReset}
+                      title="Send a secure email link to set a password for this account"
+                      className="flex flex-none items-center gap-1.5 rounded-lg bg-forest-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-forest-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <KeyRound size={14} />
+                      {passwordActionLoading ? "Sending..." : "Set password"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {connectedProviders.length <= 1 && (
+                <p className="mt-3 text-[11px] leading-5 text-gray-500">
+                  Your only sign-in method cannot be disconnected. Add another
+                  sign-in method first.
+                </p>
+              )}
+            </section>
+
+<section className="min-h-0 rounded-2xl border border-[#ddd7ca] bg-white p-4 shadow-sm">
+              <div className="mb-4 flex items-center gap-3">
                 <Laptop size={20} className="text-gold-600" />
                 <div>
                   <h2 className="font-serif text-lg text-forest-900">
@@ -1168,7 +1694,7 @@ export default function AdminSettingsPage() {
                     return (
                       <div
                         key={device.id}
-                        className="flex items-center gap-3 rounded-xl bg-[#f5f3ed] p-4"
+                        className="flex items-center gap-3 rounded-xl bg-[#f5f3ed] p-3 sm:p-4"
                       >
                         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-forest-700 shadow-sm">
                           {device.type === "mobile" ? (
@@ -1207,8 +1733,8 @@ export default function AdminSettingsPage() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-[#ddd7ca] bg-white p-5 shadow-sm">
-              <div className="mb-5 flex items-center gap-3">
+<section className="min-h-0 rounded-2xl border border-[#ddd7ca] bg-white p-4 shadow-sm">
+              <div className="mb-4 flex items-center gap-3">
                 <Bell size={20} className="text-gold-600" />
                 <div>
                   <h2 className="font-serif text-lg text-forest-900">
@@ -1244,7 +1770,7 @@ export default function AdminSettingsPage() {
                 ].map((preference) => (
                   <div
                     key={preference.label}
-                    className="flex items-center gap-4 py-4 first:pt-0 last:pb-0"
+                    className="flex items-start gap-3 py-4 first:pt-0 last:pb-0 sm:items-center sm:gap-4"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-gray-800">
@@ -1268,35 +1794,6 @@ export default function AdminSettingsPage() {
                   </div>
                 ))}
               </div>
-            </section>
-
-            <section className="rounded-2xl border border-[#ddd7ca] bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center gap-3">
-                <ShieldCheck size={20} className="text-gold-600" />
-                <div>
-                  <h2 className="font-serif text-lg text-forest-900">
-                    Account security
-                  </h2>
-                  <p className="text-xs text-gray-500">
-                    Reset your administrator password.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                disabled={saving || !user?.email}
-                onClick={sendReset}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-forest-200 px-4 py-3 text-sm font-semibold text-forest-700 transition hover:bg-forest-50 disabled:opacity-50"
-              >
-                <KeyRound size={17} /> Send password reset
-              </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-              >
-                <LogOut size={17} /> Sign out
-              </button>
             </section>
           </aside>
         </div>

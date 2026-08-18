@@ -242,14 +242,14 @@ export default function AdminDashboardPage() {
     );
 
   return (
-    <main className="min-h-screen bg-[#f2f6f0]">
-      <section className="admin-dashboard mx-auto w-full max-w-[1480px] px-5 py-6 sm:py-8 lg:px-8">
-        <header className="mb-7 flex flex-wrap items-center gap-4">
+    <main className="min-h-screen bg-[#f2f6f0] xl:h-screen xl:min-h-0 xl:overflow-hidden">
+      <section className="admin-dashboard mx-auto flex w-full max-w-[1480px] flex-col px-5 py-4 sm:py-6 lg:px-8 lg:py-8 xl:h-full xl:min-h-0">
+        <header className="mb-4 flex flex-wrap items-center gap-3 xl:mb-3 xl:flex-none">
           <div className="mr-auto">
             <p className="text-xs font-semibold uppercase tracking-[.2em] text-gold-600">
               Administration
             </p>
-            <h1 className="font-serif text-3xl text-forest-950">Dashboard</h1>
+            <h1 className="font-serif text-2xl text-forest-950 xl:text-[1.7rem]">Dashboard</h1>
           </div>
           <label className="relative hidden w-full max-w-xs md:block">
             <Search
@@ -258,14 +258,14 @@ export default function AdminDashboardPage() {
             />
             <input
               placeholder="Search stock, orders, etc."
-              className="w-full rounded-xl border-0 bg-white py-3 pl-10 pr-4 text-sm shadow-sm outline-none ring-1 ring-gray-100 focus:ring-forest-300"
+              className="w-full rounded-xl border-0 bg-white py-2.5 pl-10 pr-4 text-sm shadow-sm outline-none ring-1 ring-gray-100 focus:ring-forest-300"
             />
           </label>
           <div className="relative">
             <button
               type="button"
               onClick={toggleNotifications}
-              className="relative rounded-xl bg-white p-3 text-gray-500 shadow-sm"
+              className="relative rounded-xl bg-white p-2.5 text-gray-500 shadow-sm"
               aria-label="Open order notifications"
               aria-expanded={notificationsOpen}
             >
@@ -334,7 +334,7 @@ export default function AdminDashboardPage() {
             <button
               type="button"
               onClick={toggleProfile}
-              className="flex items-center gap-3 rounded-xl bg-white p-2 pr-3 text-left shadow-sm transition hover:bg-forest-50"
+              className="flex items-center gap-3 rounded-xl bg-white p-1.5 pr-3 text-left shadow-sm transition hover:bg-forest-50"
               aria-label="Open administrator profile menu"
               aria-expanded={profileOpen}
             >
@@ -398,16 +398,13 @@ export default function AdminDashboardPage() {
           </div>
         </header>
 
-        <div className="mb-5 rounded-lg border border-forest-200 bg-forest-50 px-4 py-2 text-xs text-forest-700">
-          Dashboard analytics are placeholder data for layout preview only.
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-3 xl:flex-none">
           {metricCards.map(({ label, value, change, icon: Icon, accent }) => (
             <article
               key={label}
-              className={`rounded-2xl border border-forest-100 p-5 ${accent ? "bg-forest-700 text-white" : "bg-gradient-to-br from-white to-forest-50"} shadow-sm`}
+              className={`rounded-2xl border border-forest-100 p-4 ${accent ? "bg-forest-700 text-white" : "bg-gradient-to-br from-white to-forest-50"} shadow-sm`}
             >
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-3 flex items-center justify-between">
                 <p
                   className={`text-sm ${accent ? "text-forest-100" : "text-gray-500"}`}
                 >
@@ -421,7 +418,7 @@ export default function AdminDashboardPage() {
               </div>
               <div className="flex items-end justify-between">
                 <strong
-                  className={`text-2xl sm:text-3xl ${accent ? "text-white" : "text-forest-950"}`}
+                  className={`text-2xl xl:text-[1.65rem] ${accent ? "text-white" : "text-forest-950"}`}
                 >
                   {value}
                 </strong>
@@ -435,9 +432,9 @@ export default function AdminDashboardPage() {
           ))}
         </div>
 
-        <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,.8fr)]">
-          <article className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="mb-5 flex items-center justify-between">
+        <div className="mt-3 grid gap-3 xl:mt-2 xl:min-h-0 xl:flex-[1.18] xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,.8fr)]">
+          <article className="min-h-0 rounded-2xl bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
               <div>
                 <h2 className="font-serif text-xl text-forest-950">
                   Revenue Analytics
@@ -451,7 +448,7 @@ export default function AdminDashboardPage() {
                 Last 8 Days
               </button>
             </div>
-            <div className="relative h-64 overflow-hidden">
+            <div className="relative h-48 overflow-hidden xl:h-[calc(100%-3.5rem)] xl:min-h-[150px]">
               <div className="absolute inset-0 flex flex-col justify-between py-2">
                 {[16, 12, 8, 4, 0].map((item) => (
                   <div
@@ -483,11 +480,11 @@ export default function AdminDashboardPage() {
               </svg>
             </div>
           </article>
-          <article className="rounded-2xl bg-white p-5 shadow-sm">
+          <article className="min-h-0 rounded-2xl bg-white p-4 shadow-sm">
             <h2 className="font-serif text-xl text-forest-950">
               Monthly Target
             </h2>
-            <div className="relative mx-auto mt-5 h-52 w-52">
+            <div className="relative mx-auto mt-3 h-36 w-36 2xl:h-40 2xl:w-40">
               <svg
                 viewBox="0 0 120 120"
                 className="h-full w-full -rotate-90"
@@ -520,11 +517,11 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
             </div>
-            <p className="mt-2 text-center font-semibold">Great progress!</p>
-            <p className="mx-auto mt-1 max-w-xs text-center text-xs leading-5 text-gray-400">
+            <p className="mt-1 text-center text-sm font-semibold">Great progress!</p>
+            <p className="mx-auto mt-1 max-w-xs text-center text-[11px] leading-4 text-gray-400">
               This sample target will be connected to real order data later.
             </p>
-            <div className="mt-5 grid grid-cols-2 divide-x rounded-xl bg-[#f5eddf] p-3 text-center text-xs">
+            <div className="mt-3 grid grid-cols-2 divide-x rounded-xl bg-[#f5eddf] p-2.5 text-center text-xs">
               <div>
                 <p className="text-gray-400">Target</p>
                 <strong>₱200,000</strong>
@@ -537,15 +534,15 @@ export default function AdminDashboardPage() {
           </article>
         </div>
 
-        <div className="mt-5 grid gap-5 lg:grid-cols-[.8fr_1.5fr_1fr]">
-          <article className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="mb-5 flex justify-between">
+        <div className="mt-3 grid gap-3 lg:grid-cols-[.8fr_1.5fr_1fr] xl:mt-2 xl:min-h-0 xl:flex-1">
+          <article className="min-h-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm">
+            <div className="mb-3 flex justify-between">
               <h2 className="font-serif text-xl">Active Users</h2>
               <Users size={19} className="text-gray-400" />
             </div>
-            <strong className="text-3xl text-forest-950">2,758</strong>
+            <strong className="text-2xl text-forest-950">2,758</strong>
             <p className="text-xs text-gray-400">sample users</p>
-            <div className="mt-6 space-y-4">
+            <div className="mt-3 space-y-2.5">
               {[
                 ["Philippines", "48%"],
                 ["United States", "24%"],
@@ -567,12 +564,12 @@ export default function AdminDashboardPage() {
               ))}
             </div>
           </article>
-          <article className="rounded-2xl bg-white p-5 shadow-sm">
+          <article className="min-h-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="font-serif text-xl">Conversion Rate</h2>
               <BarChart3 className="text-gray-400" size={19} />
             </div>
-            <div className="mt-8 flex h-56 items-end gap-3 border-b border-gray-100">
+            <div className="mt-4 flex h-[calc(100%-3rem)] min-h-[140px] items-end gap-3 border-b border-gray-100">
               {[
                 ["Views", "100%"],
                 ["Cart", "62%"],
@@ -595,18 +592,18 @@ export default function AdminDashboardPage() {
               ))}
             </div>
           </article>
-          <article className="rounded-2xl bg-white p-5 shadow-sm">
-            <div className="mb-6 flex justify-between">
+          <article className="min-h-0 overflow-hidden rounded-2xl bg-white p-4 shadow-sm">
+            <div className="mb-3 flex justify-between">
               <h2 className="font-serif text-xl">Top Categories</h2>
               <Boxes className="text-gray-400" size={19} />
             </div>
-            <div className="mx-auto flex h-40 w-40 items-center justify-center rounded-full bg-[conic-gradient(#214f19_0_42%,#c89c4a_42%_72%,#dfcfad_72%_100%)]">
-              <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full bg-white">
+            <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-[conic-gradient(#214f19_0_42%,#c89c4a_42%_72%,#dfcfad_72%_100%)] 2xl:h-32 2xl:w-32">
+              <div className="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white 2xl:h-20 2xl:w-20">
                 <span className="text-xs text-gray-400">Sales</span>
                 <strong className="text-xl">100%</strong>
               </div>
             </div>
-            <div className="mt-6 space-y-3 text-xs">
+            <div className="mt-3 space-y-2 text-xs">
               {[
                 ["Apparel", "42%"],
                 ["Accessories", "30%"],

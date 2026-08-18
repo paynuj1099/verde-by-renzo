@@ -626,7 +626,12 @@ export default function ProductAdminPage() {
     currentNewArrivalPage * newArrivalPageSize,
   );
 
-  if (loading || checkingRole) return <AdminPageSkeleton variant="catalog" />;
+  if (loading || checkingRole)
+    return (
+      <AdminPageSkeleton
+        variant={isNewArrivalsPage ? "new-arrivals" : "catalog"}
+      />
+    );
   if (!user)
     return (
       <main className="min-h-screen bg-gray-50 pt-32 text-center">

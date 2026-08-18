@@ -3,18 +3,21 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import {
   AuthCredential,
+  EmailAuthProvider,
   GoogleAuthProvider,
   GithubAuthProvider,
   User,
   createUserWithEmailAndPassword,
   getRedirectResult,
   linkWithCredential,
+  linkWithPopup,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
   signOut,
+  unlink,
   updateProfile,
 } from 'firebase/auth'
 import {
@@ -26,6 +29,7 @@ import {
 import { firebaseAuth, firestore } from '@/lib/firebase'
 
 type LoginProvider = 'google' | 'github' | 'password'
+type ProviderId = 'google.com' | 'github.com' | 'password'
 
 type AuthContextValue = {
   user: User | null
@@ -35,6 +39,11 @@ type AuthContextValue = {
   signInWithGithub: () => Promise<boolean>
   linkPendingGithubWithGoogle: () => Promise<boolean>
   clearPendingProviderLink: () => void
+  connectedProviders: ProviderId[]
+  linkGoogleAccount: () => Promise<void>
+  linkGithubAccount: () => Promise<void>
+  linkPasswordAccount: (password: string) => Promise<void>
+  unlinkProvider: (providerId: ProviderId) => Promise<void>
   signInWithEmail: (
     email: string,
     password: string,
@@ -68,36 +77,132 @@ const AuthContext = createContext<AuthContextValue | undefined>(
  * So the profile can correctly display:
  * "Signed in with GitHub"
  */
+function providerIdToLoginProvider(
+  providerId: string,
+): LoginProvider | undefined {
+  if (providerId === 'google.com') return 'google'
+  if (providerId === 'github.com') return 'github'
+  if (providerId === 'password') return 'password'
+  return undefined
+}
+
+function loginProviderToProviderId(
+  provider: LoginProvider,
+): ProviderId {
+  if (provider === 'google') return 'google.com'
+  if (provider === 'github') return 'github.com'
+  return 'password'
+}
+
+/*
+ * Firebase Authentication is the source of truth for linked providers.
+ *
+ * Firestore only mirrors that information so the rest of the app can
+ * display it. This prevents stale values such as:
+ *
+ * provider: "google"
+ * providers: ["google.com"]
+ *
+ * when Firebase Authentication actually only has "password".
+ */
 async function saveUserProfile(
   user: User,
   loginProvider?: LoginProvider,
 ) {
-  const providers = user.providerData.map(
-    (provider) => provider.providerId,
+  const providers = Array.from(
+    new Set(
+      user.providerData
+        .map((provider) => provider.providerId)
+        .filter(
+          (providerId): providerId is ProviderId =>
+            providerId === 'google.com' ||
+            providerId === 'github.com' ||
+            providerId === 'password',
+        ),
+    ),
   )
 
-  const profileData: Record<string, unknown> = {
+  let resolvedLoginProvider = loginProvider
+
+  /*
+   * If the caller did not explicitly tell us which provider was used,
+   * try the current browser session — but only if that provider is
+   * actually still linked to this Firebase user.
+   */
+  if (
+    !resolvedLoginProvider &&
+    typeof window !== 'undefined'
+  ) {
+    const sessionProvider =
+      window.sessionStorage.getItem(
+        'verde-login-provider',
+      ) as LoginProvider | null
+
+    if (
+      sessionProvider &&
+      providers.includes(
+        loginProviderToProviderId(
+          sessionProvider,
+        ),
+      )
+    ) {
+      resolvedLoginProvider =
+        sessionProvider
+    }
+  }
+
+  /*
+   * If there is only one real Firebase provider, there is no ambiguity.
+   * This also automatically repairs stale Firestore provider metadata.
+   */
+  if (
+    !resolvedLoginProvider &&
+    providers.length === 1
+  ) {
+    resolvedLoginProvider =
+      providerIdToLoginProvider(
+        providers[0],
+      )
+  }
+
+  const profileData: Record<
+    string,
+    unknown
+  > = {
     uid: user.uid,
     email: user.email,
     displayName: user.displayName,
     photoURL: user.photoURL,
+
+    /*
+     * Always mirror the real Firebase Authentication providers.
+     */
     providers,
-    lastLoginAt: serverTimestamp(),
+
+    updatedAt: serverTimestamp(),
   }
 
-  /*
-   * Only overwrite provider when we actually know
-   * which provider was used for this login.
-   *
-   * This prevents onAuthStateChanged from changing
-   * GitHub back to Google simply because both are linked.
-   */
-  if (loginProvider) {
-    profileData.provider = loginProvider
+  if (resolvedLoginProvider) {
+    /*
+     * Keep `provider` for compatibility with the existing UI,
+     * while also storing the clearer field going forward.
+     */
+    profileData.provider =
+      resolvedLoginProvider
+
+    profileData.lastLoginProvider =
+      resolvedLoginProvider
+
+    profileData.lastLoginAt =
+      serverTimestamp()
   }
 
   await setDoc(
-    doc(firestore, 'users', user.uid),
+    doc(
+      firestore,
+      'users',
+      user.uid,
+    ),
     profileData,
     { merge: true },
   )
@@ -116,6 +221,24 @@ export function AuthProvider({
 
   const [pendingProviderLink, setPendingProviderLink] =
     useState<'github' | null>(null)
+
+  const getConnectedProviders = (authUser: User | null): ProviderId[] =>
+    authUser
+      ? Array.from(
+          new Set(
+            authUser.providerData
+              .map((provider) => provider.providerId)
+              .filter(
+                (providerId): providerId is ProviderId =>
+                  providerId === 'google.com' ||
+                  providerId === 'github.com' ||
+                  providerId === 'password',
+              ),
+          ),
+        )
+      : []
+
+  const [connectedProviders, setConnectedProviders] = useState<ProviderId[]>([])
 
   useEffect(() => {
     /*
@@ -167,16 +290,20 @@ export function AuthProvider({
       firebaseAuth,
       (nextUser) => {
         setUser(nextUser)
+        setConnectedProviders(getConnectedProviders(nextUser))
         setLoading(false)
 
         if (nextUser) {
           /*
-           * Update generic account information,
-           * but do NOT overwrite the login provider.
+           * Keep Firestore synchronized with Firebase Authentication.
+           *
+           * saveUserProfile() will preserve the real current login provider
+           * when known, but it will also repair stale provider metadata when
+           * Firebase Auth only has one linked method.
            */
-          saveUserProfile(nextUser).catch(
-            console.error,
-          )
+          saveUserProfile(
+            nextUser,
+          ).catch(console.error)
         }
       },
     )
@@ -402,6 +529,258 @@ export function AuthProvider({
   }
 
   /*
+   * Link Google to the currently signed-in Firebase account.
+   */
+  const linkGoogleAccount = async () => {
+    const currentUser = firebaseAuth.currentUser
+
+    if (!currentUser) {
+      throw new Error('You must be signed in before linking Google.')
+    }
+
+    if (
+      currentUser.providerData.some(
+        (provider) => provider.providerId === 'google.com',
+      )
+    ) {
+      throw new Error('Google is already connected to this account.')
+    }
+
+    const provider = new GoogleAuthProvider()
+
+    provider.setCustomParameters({
+      prompt: 'select_account',
+    })
+
+    const result = await linkWithPopup(
+      currentUser,
+      provider,
+    )
+
+    setUser(result.user)
+    setConnectedProviders((current) =>
+      current.includes('google.com')
+        ? current
+        : [...current, 'google.com'],
+    )
+
+    await saveUserProfile(
+      result.user,
+      'google',
+    )
+  }
+
+  /*
+   * Link GitHub to the currently signed-in Firebase account.
+   */
+  const linkGithubAccount = async () => {
+    const currentUser = firebaseAuth.currentUser
+
+    if (!currentUser) {
+      throw new Error('You must be signed in before linking GitHub.')
+    }
+
+    if (
+      currentUser.providerData.some(
+        (provider) => provider.providerId === 'github.com',
+      )
+    ) {
+      throw new Error('GitHub is already connected to this account.')
+    }
+
+    const provider = new GithubAuthProvider()
+
+    provider.addScope('user:email')
+
+    provider.setCustomParameters({
+      prompt: 'select_account',
+    })
+
+    const result = await linkWithPopup(
+      currentUser,
+      provider,
+    )
+
+    setUser(result.user)
+    setConnectedProviders((current) =>
+      current.includes('github.com')
+        ? current
+        : [...current, 'github.com'],
+    )
+
+    await saveUserProfile(
+      result.user,
+      'github',
+    )
+  }
+
+  /*
+   * Link Email & Password to the currently signed-in Firebase account.
+   */
+  const linkPasswordAccount = async (password: string) => {
+    const currentUser = firebaseAuth.currentUser
+
+    if (!currentUser) {
+      throw new Error('You must be signed in before adding a password.')
+    }
+
+    if (!currentUser.email) {
+      throw new Error('This account does not have an email address to use for password sign-in.')
+    }
+
+    if (
+      currentUser.providerData.some(
+        (provider) => provider.providerId === 'password',
+      )
+    ) {
+      throw new Error('Email & Password is already connected to this account.')
+    }
+
+    if (password.length < 6) {
+      throw new Error('Password must be at least 6 characters.')
+    }
+
+    const credential = EmailAuthProvider.credential(
+      currentUser.email,
+      password,
+    )
+
+    const result = await linkWithCredential(
+      currentUser,
+      credential,
+    )
+
+    setUser(result.user)
+    setConnectedProviders((current) =>
+      current.includes('password')
+        ? current
+        : [...current, 'password'],
+    )
+
+    await saveUserProfile(
+      result.user,
+      'password',
+    )
+  }
+
+  /*
+   * Unlink one sign-in provider from the current Firebase account.
+   *
+   * Safety rule:
+   * Never allow removal of the last remaining sign-in method.
+   */
+  const unlinkProvider = async (
+    providerId: ProviderId,
+  ) => {
+    const currentUser = firebaseAuth.currentUser
+
+    if (!currentUser) {
+      throw new Error('You must be signed in before unlinking an account.')
+    }
+
+    const providerIds = Array.from(
+      new Set(
+        currentUser.providerData
+          .map((provider) => provider.providerId)
+          .filter(
+            (id): id is ProviderId =>
+              id === 'google.com' ||
+              id === 'github.com' ||
+              id === 'password',
+          ),
+      ),
+    )
+
+    if (!providerIds.includes(providerId)) {
+      throw new Error('That sign-in method is not connected to this account.')
+    }
+
+    if (providerIds.length <= 1) {
+      throw new Error(
+        'You cannot unlink your only sign-in method. Connect another account first.',
+      )
+    }
+
+    const updatedUser = await unlink(
+      currentUser,
+      providerId,
+    )
+
+    setUser(updatedUser)
+
+    /*
+     * Update the UI immediately after Firebase confirms the unlink.
+     * Do not wait for a page refresh or for providerData to be observed again.
+     */
+    const remainingProviders = connectedProviders.filter(
+      (id) => id !== providerId,
+    )
+
+    setConnectedProviders(remainingProviders)
+
+    /*
+     * If the provider used for the current session was just removed,
+     * stop showing it as the active provider on profile/settings pages.
+     */
+    const activeSessionProvider =
+      window.sessionStorage.getItem(
+        'verde-login-provider',
+      )
+
+    const removedProviderName =
+      providerId === 'google.com'
+        ? 'google'
+        : providerId === 'github.com'
+          ? 'github'
+          : 'password'
+
+    let nextLoginProvider:
+      | LoginProvider
+      | undefined
+
+    if (
+      activeSessionProvider ===
+      removedProviderName
+    ) {
+      window.sessionStorage.removeItem(
+        'verde-login-provider',
+      )
+
+      /*
+       * If only one provider remains, use it as the active provider
+       * so Firestore never keeps the disconnected provider.
+       */
+      if (
+        remainingProviders.length === 1
+      ) {
+        nextLoginProvider =
+          providerIdToLoginProvider(
+            remainingProviders[0],
+          )
+
+        if (nextLoginProvider) {
+          window.sessionStorage.setItem(
+            'verde-login-provider',
+            nextLoginProvider,
+          )
+        }
+      }
+    } else if (
+      activeSessionProvider === 'google' ||
+      activeSessionProvider === 'github' ||
+      activeSessionProvider === 'password'
+    ) {
+      nextLoginProvider =
+        activeSessionProvider
+    }
+
+    await saveUserProfile(
+      updatedUser,
+      nextLoginProvider,
+    )
+  }
+
+  /*
    * Email/password Login
    */
   const signInWithEmail = async (
@@ -480,6 +859,14 @@ export function AuthProvider({
       'verde-login-provider',
       'password',
     )
+
+    /*
+     * Normalize provider metadata using the same Firebase Auth mirror.
+     */
+    await saveUserProfile(
+      result.user,
+      'password',
+    )
   }
 
   /*
@@ -538,6 +925,7 @@ export function AuthProvider({
 
     setPendingGithubCredential(null)
     setPendingProviderLink(null)
+    setConnectedProviders([])
 
     await signOut(firebaseAuth)
   }
@@ -552,6 +940,11 @@ export function AuthProvider({
         signInWithGithub,
         linkPendingGithubWithGoogle,
         clearPendingProviderLink,
+        connectedProviders,
+        linkGoogleAccount,
+        linkGithubAccount,
+        linkPasswordAccount,
+        unlinkProvider,
         signInWithEmail,
         signUpWithEmail,
         resetPassword,
