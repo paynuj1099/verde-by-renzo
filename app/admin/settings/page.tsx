@@ -4,7 +4,6 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   getIdTokenResult,
-  sendPasswordResetEmail,
   updateProfile,
 } from "firebase/auth";
 import {
@@ -45,7 +44,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { firebaseAuth, firestore } from "@/lib/firebase";
+import { firestore } from "@/lib/firebase";
 import AdminToast from "@/components/AdminToast";
 import AdminConfirmModal from "@/components/AdminConfirmModal";
 import AdminImageCropModal from "@/components/AdminImageCropModal";
@@ -354,6 +353,7 @@ export default function AdminSettingsPage() {
     connectedProviders,
     linkGoogleAccount,
     linkGithubAccount,
+    linkPasswordAccount,
     unlinkProvider,
   } = useAuth();
   const [allowed, setAllowed] = useState<boolean | null>(null);
@@ -385,6 +385,9 @@ export default function AdminSettingsPage() {
   } | null>(null);
   const [saving, setSaving] = useState(false);
   const [passwordActionLoading, setPasswordActionLoading] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [newOrderAlerts, setNewOrderAlerts] = useState(true);
   const [statusAlerts, setStatusAlerts] = useState(true);
@@ -838,29 +841,70 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const sendReset = async () => {
-    if (!user?.email) return;
+  const openPasswordModal = () => {
+    if (!user?.email) {
+      setMessage(
+        "This account does not have an email address available for password sign-in.",
+      );
+      return;
+    }
 
-    const passwordIsConnected =
-      connectedProviders.includes("password");
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordModalOpen(true);
+  };
+
+  const closePasswordModal = () => {
+    if (passwordActionLoading) return;
+
+    setPasswordModalOpen(false);
+    setNewPassword("");
+    setConfirmPassword("");
+  };
+
+  const connectPasswordAccount = async (event: FormEvent) => {
+    event.preventDefault();
+
+    if (!user?.email) {
+      setMessage(
+        "This account does not have an email address available for password sign-in.",
+      );
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setMessage("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setMessage("The passwords do not match.");
+      return;
+    }
 
     setPasswordActionLoading(true);
 
     try {
-      await sendPasswordResetEmail(firebaseAuth, user.email);
+      await linkPasswordAccount(newPassword);
 
+      setPasswordModalOpen(false);
+      setNewPassword("");
+      setConfirmPassword("");
       setMessage(
-        passwordIsConnected
-          ? `Password reset email sent to ${user.email}.`
-          : `Password setup email sent to ${user.email}. Open the link to create a password for this account.`,
+        `Email & Password sign-in connected successfully to ${user.email}.`,
       );
     } catch (error) {
-      console.error(error);
+      console.error("Unable to connect Email & Password:", error);
+
+      const code = (error as { code?: string }).code;
 
       setMessage(
-        passwordIsConnected
-          ? "Unable to send the password reset email."
-          : "Unable to send the password setup email.",
+        code === "auth/email-already-in-use" ||
+          code === "auth/credential-already-in-use"
+          ? "Unable to connect Email & Password. This email is already used by another Firebase account."
+          : error instanceof Error
+            ? error.message
+            : "Unable to connect Email & Password sign-in.",
       );
     } finally {
       setPasswordActionLoading(false);
@@ -1036,6 +1080,117 @@ export default function AdminSettingsPage() {
           onConfirm={confirmAccountUnlink}
           onCancel={() => setConfirmUnlinkProvider(null)}
         />
+        {passwordModalOpen && (
+          <div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-set-password-title"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                closePasswordModal();
+              }
+            }}
+          >
+            <form
+              onSubmit={connectPasswordAccount}
+              className="w-full max-w-md overflow-hidden rounded-2xl border border-[#ddd7ca] bg-white shadow-2xl"
+            >
+              <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-forest-50 text-forest-700">
+                    <KeyRound size={19} />
+                  </span>
+                  <div>
+                    <h2
+                      id="admin-set-password-title"
+                      className="font-serif text-xl text-forest-900"
+                    >
+                      Set Email &amp; Password
+                    </h2>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      Add password sign-in to this same administrator account.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 px-5 py-5 sm:px-6">
+                <label className="block text-sm font-medium text-gray-700">
+                  Email address
+                  <input
+                    type="email"
+                    readOnly
+                    value={user?.email || ""}
+                    className="mt-1.5 w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-normal text-gray-500 outline-none"
+                  />
+                </label>
+
+                <label className="block text-sm font-medium text-gray-700">
+                  New password
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    placeholder="At least 6 characters"
+                    className="mt-1.5 w-full rounded-xl border px-4 py-3 font-normal outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-100"
+                    autoFocus
+                  />
+                </label>
+
+                <label className="block text-sm font-medium text-gray-700">
+                  Confirm password
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    placeholder="Enter the password again"
+                    className="mt-1.5 w-full rounded-xl border px-4 py-3 font-normal outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-100"
+                  />
+                </label>
+
+                <p className="rounded-xl bg-[#f5f3ed] px-4 py-3 text-xs leading-5 text-gray-600">
+                  This adds Email &amp; Password to the currently signed-in
+                  Firebase user. Your Google and GitHub connections stay
+                  attached to the same account.
+                </p>
+              </div>
+
+              <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+                <button
+                  type="button"
+                  disabled={passwordActionLoading}
+                  onClick={closePasswordModal}
+                  className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={
+                    passwordActionLoading ||
+                    newPassword.length < 6 ||
+                    confirmPassword.length < 6
+                  }
+                  className="flex items-center justify-center gap-2 rounded-xl bg-forest-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-forest-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <KeyRound size={16} />
+                  {passwordActionLoading
+                    ? "Connecting..."
+                    : "Set password"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         <AdminImageCropModal
           file={cropSourceFile}
           previewUrl={cropSourcePreview}
@@ -1636,13 +1791,13 @@ export default function AdminSettingsPage() {
                   ) : (
                     <button
                       type="button"
-                      disabled={passwordActionLoading}
-                      onClick={sendReset}
-                      title="Send a secure email link to set a password for this account"
+                      disabled={passwordActionLoading || accountAction !== null}
+                      onClick={openPasswordModal}
+                      title="Add Email & Password as a sign-in method for this account"
                       className="flex flex-none items-center gap-1.5 rounded-lg bg-forest-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-forest-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <KeyRound size={14} />
-                      {passwordActionLoading ? "Sending..." : "Set password"}
+                      {passwordActionLoading ? "Connecting..." : "Set password"}
                     </button>
                   )}
                 </div>

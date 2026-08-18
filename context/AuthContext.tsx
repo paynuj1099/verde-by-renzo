@@ -558,16 +558,11 @@ export function AuthProvider({
     )
 
     setUser(result.user)
-    setConnectedProviders((current) =>
-      current.includes('google.com')
-        ? current
-        : [...current, 'google.com'],
-    )
+    setConnectedProviders(getConnectedProviders(result.user))
 
-    await saveUserProfile(
-      result.user,
-      'google',
-    )
+    // Linking Google does not mean the current session was authenticated
+    // with Google. Preserve the provider that actually signed the user in.
+    await saveUserProfile(result.user)
   }
 
   /*
@@ -602,16 +597,10 @@ export function AuthProvider({
     )
 
     setUser(result.user)
-    setConnectedProviders((current) =>
-      current.includes('github.com')
-        ? current
-        : [...current, 'github.com'],
-    )
+    setConnectedProviders(getConnectedProviders(result.user))
 
-    await saveUserProfile(
-      result.user,
-      'github',
-    )
+    // Linking GitHub does not change the provider used for this session.
+    await saveUserProfile(result.user)
   }
 
   /*
@@ -651,16 +640,11 @@ export function AuthProvider({
     )
 
     setUser(result.user)
-    setConnectedProviders((current) =>
-      current.includes('password')
-        ? current
-        : [...current, 'password'],
-    )
+    setConnectedProviders(getConnectedProviders(result.user))
 
-    await saveUserProfile(
-      result.user,
-      'password',
-    )
+    // Adding a password is an account-linking action. It must not overwrite
+    // the provider that was actually used to authenticate this session.
+    await saveUserProfile(result.user)
   }
 
   /*
@@ -712,9 +696,7 @@ export function AuthProvider({
      * Update the UI immediately after Firebase confirms the unlink.
      * Do not wait for a page refresh or for providerData to be observed again.
      */
-    const remainingProviders = connectedProviders.filter(
-      (id) => id !== providerId,
-    )
+    const remainingProviders = getConnectedProviders(updatedUser)
 
     setConnectedProviders(remainingProviders)
 

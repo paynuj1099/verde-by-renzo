@@ -71,8 +71,8 @@ export default function ProfilePage() {
     connectedProviders,
     linkGoogleAccount,
     linkGithubAccount,
+    linkPasswordAccount,
     unlinkProvider,
-    resetPassword,
   } = useAuth();
 
   const [orders, setOrders] = useState<AccountOrder[]>([]);
@@ -90,6 +90,9 @@ export default function ProfilePage() {
     "google" | "github" | "unlink" | null
   >(null);
   const [passwordActionLoading, setPasswordActionLoading] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [accountMessage, setAccountMessage] = useState("");
   const [confirmUnlinkProvider, setConfirmUnlinkProvider] = useState<
     LinkedProviderId | null
@@ -433,25 +436,59 @@ export default function ProfilePage() {
     }
   };
 
-  const sendReset = async () => {
+  const openPasswordModal = () => {
+    setNewPassword("");
+    setConfirmPassword("");
+    setAccountMessage("");
+    setShowPasswordModal(true);
+  };
+
+  const closePasswordModal = () => {
+    if (passwordActionLoading) return;
+
+    setShowPasswordModal(false);
+    setNewPassword("");
+    setConfirmPassword("");
+  };
+
+  const connectPasswordAccount = async () => {
     if (!user?.email) {
       setAccountMessage(
-        "Add an email address to your account before setting a password.",
+        "This account does not have an email address available for password sign-in.",
       );
       return;
     }
 
+    if (newPassword.length < 6) {
+      setAccountMessage("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setAccountMessage("Passwords do not match.");
+      return;
+    }
+
     setPasswordActionLoading(true);
+
     try {
-      await resetPassword(user.email);
-      setAccountMessage(
-        "Password setup link sent. Check your inbox and spam folder.",
-      );
+      await linkPasswordAccount(newPassword);
+      setShowPasswordModal(false);
+      setNewPassword("");
+      setConfirmPassword("");
+      setAccountMessage("Email & Password connected successfully.");
     } catch (error) {
+      const code = (error as { code?: string }).code;
+
       setAccountMessage(
-        error instanceof Error
-          ? error.message
-          : "Unable to send password setup email.",
+        code === "auth/email-already-in-use" ||
+          code === "auth/credential-already-in-use"
+          ? "Unable to add this password because the email credential is already used by another account."
+          : code === "auth/requires-recent-login"
+            ? "For security, please sign in again and then try setting your password."
+            : error instanceof Error
+              ? error.message
+              : "Unable to connect Email & Password.",
       );
     } finally {
       setPasswordActionLoading(false);
@@ -497,6 +534,116 @@ export default function ProfilePage() {
         onConfirm={confirmAccountUnlink}
         onCancel={() => setConfirmUnlinkProvider(null)}
       />
+
+      {showPasswordModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="set-password-title"
+        >
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl sm:p-7">
+            <div className="mb-5">
+              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-forest-50 text-forest-700">
+                <KeyRound size={21} />
+              </div>
+
+              <h2
+                id="set-password-title"
+                className="font-serif text-2xl text-forest-900"
+              >
+                Set Email &amp; Password
+              </h2>
+
+              <p className="mt-1 text-sm leading-6 text-gray-500">
+                Add password sign-in to this same Verde account. Your Google and
+                GitHub connections will remain linked.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={user.email || ""}
+                  readOnly
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="new-account-password"
+                  className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500"
+                >
+                  New password
+                </label>
+                <input
+                  id="new-account-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  autoComplete="new-password"
+                  minLength={6}
+                  placeholder="At least 6 characters"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-forest-500 focus:ring-2 focus:ring-forest-100"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="confirm-account-password"
+                  className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500"
+                >
+                  Confirm password
+                </label>
+                <input
+                  id="confirm-account-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !passwordActionLoading) {
+                      void connectPasswordAccount();
+                    }
+                  }}
+                  autoComplete="new-password"
+                  minLength={6}
+                  placeholder="Re-enter your password"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-forest-500 focus:ring-2 focus:ring-forest-100"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                disabled={passwordActionLoading}
+                onClick={closePasswordModal}
+                className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  passwordActionLoading ||
+                  newPassword.length < 6 ||
+                  confirmPassword.length < 6
+                }
+                onClick={() => void connectPasswordAccount()}
+                className="rounded-xl bg-forest-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-forest-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {passwordActionLoading ? "Connecting..." : "Set password"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="container mx-auto max-w-[1240px] px-4">
         <div className="grid gap-6 xl:grid-cols-2">
@@ -737,12 +884,12 @@ export default function ProfilePage() {
                     <button
                       type="button"
                       disabled={passwordActionLoading}
-                      onClick={sendReset}
-                      title="Send a secure email link to set a password for this account"
+                      onClick={openPasswordModal}
+                      title="Add email and password as a sign-in method for this account"
                       className="flex flex-none items-center gap-1.5 rounded-lg bg-forest-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-forest-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <KeyRound size={14} />
-                      {passwordActionLoading ? "Sending..." : "Set password"}
+                      Set password
                     </button>
                   )}
                 </div>
