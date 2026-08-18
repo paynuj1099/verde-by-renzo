@@ -14,6 +14,8 @@ type AdminSelectProps = {
   onChange: (value: string) => void;
   ariaLabel: string;
   className?: string;
+  dataTour?: string;
+  dataTourMenu?: string;
 };
 
 export default function AdminSelect({
@@ -22,6 +24,8 @@ export default function AdminSelect({
   onChange,
   ariaLabel,
   className = "",
+  dataTour,
+  dataTourMenu,
 }: AdminSelectProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -45,6 +49,7 @@ export default function AdminSelect({
   return (
     <div ref={rootRef} className={`relative ${className}`}>
       <button
+        data-tour={dataTour}
         type="button"
         aria-label={ariaLabel}
         aria-haspopup="listbox"
@@ -60,6 +65,7 @@ export default function AdminSelect({
       </button>
       {open && (
         <div
+          data-tour={dataTourMenu}
           role="listbox"
           aria-label={ariaLabel}
           className="absolute left-0 right-0 top-[calc(100%+6px)] z-[1080] max-h-64 overflow-y-auto rounded-xl border border-forest-100 bg-white p-1.5 shadow-xl ring-1 ring-black/5"

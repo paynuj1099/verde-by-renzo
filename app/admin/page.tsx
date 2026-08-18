@@ -291,12 +291,12 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="max-h-[calc(100vh-14rem)] overflow-y-auto sm:max-h-80">
                   {notifications.length ? (
-                    notifications.map((notification) => (
+                    notifications.map((notification, index) => (
                       <Link
                         key={`${notification.source}:${notification.id}`}
                         href="/admin/orders"
                         onClick={() => setNotificationsOpen(false)}
-                        className="block border-b border-gray-50 px-4 py-3 transition hover:bg-forest-50"
+                        className={`${index >= 5 ? "hidden sm:block" : "block"} border-b border-gray-50 px-4 py-3 transition hover:bg-forest-50`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">

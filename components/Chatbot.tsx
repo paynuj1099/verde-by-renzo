@@ -305,8 +305,8 @@ export default function Chatbot() {
                 <div
                   className={`max-w-[78%] rounded-2xl px-4 py-3 ${
                     message.sender === "user"
-                      ? "rounded-br-sm bg-[#18301f] text-[#fffaf0] shadow-[0_6px_18px_rgba(17,25,20,0.12)]"
-                      : "rounded-bl-sm border border-[#ddd5c6] bg-[#fffdf9] text-[#20281f] shadow-[0_5px_16px_rgba(35,38,31,0.06)]"
+                      ? "rounded-tr-sm bg-[#18301f] text-[#fffaf0] shadow-[0_6px_18px_rgba(17,25,20,0.12)]"
+                      : "rounded-tl-sm border border-[#ddd5c6] bg-[#fffdf9] text-[#20281f] shadow-[0_5px_16px_rgba(35,38,31,0.06)]"
                   }`}
                 >
                   <p className="text-[13px] leading-relaxed">{message.text}</p>
@@ -345,7 +345,7 @@ export default function Chatbot() {
                   <Bot size={15} className="text-[#d7ad54]" strokeWidth={1.7} />
                 </div>
 
-                <div className="rounded-2xl rounded-bl-sm border border-[#ddd5c6] bg-[#fffdf9] px-4 py-3 shadow-sm">
+                <div className="rounded-2xl rounded-tl-sm border border-[#ddd5c6] bg-[#fffdf9] px-4 py-3 shadow-sm">
                   <div className="flex items-center gap-1">
                     <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#b18a3f] [animation-delay:-0.3s]" />
 

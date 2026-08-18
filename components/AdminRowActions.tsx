@@ -9,6 +9,7 @@ type AdminRowActionsProps = {
   onEdit: () => void;
   onDelete: () => void;
   disabled?: boolean;
+  tourPrefix?: string;
 };
 
 const baseClass =
@@ -20,10 +21,12 @@ export default function AdminRowActions({
   onEdit,
   onDelete,
   disabled = false,
+  tourPrefix,
 }: AdminRowActionsProps) {
   return (
     <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-shrink-0">
       <Link
+        data-tour={tourPrefix ? `${tourPrefix}-preview` : undefined}
         href={previewHref}
         target="_blank"
         rel="noopener noreferrer"
@@ -34,6 +37,7 @@ export default function AdminRowActions({
         Preview
       </Link>
       <button
+        data-tour={tourPrefix ? `${tourPrefix}-edit` : undefined}
         type="button"
         onClick={onEdit}
         disabled={disabled}
@@ -44,6 +48,7 @@ export default function AdminRowActions({
         Edit
       </button>
       <button
+        data-tour={tourPrefix ? `${tourPrefix}-delete` : undefined}
         type="button"
         onClick={onDelete}
         disabled={disabled}

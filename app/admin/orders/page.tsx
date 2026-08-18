@@ -550,6 +550,7 @@ export default function OrdersPage() {
             </p>
           </div>
           <button
+            data-tour="add-order"
             type="button"
             onClick={() => setManualOpen(true)}
             className="flex items-center gap-2 rounded-lg bg-forest-700 px-5 py-3 font-semibold text-white hover:bg-forest-800"
@@ -566,7 +567,7 @@ export default function OrdersPage() {
           tone={activeToastTone}
         />
         <section className="rounded-2xl border bg-white p-4 sm:p-5">
-          <div className="grid gap-3 sm:grid-cols-[1fr_220px_220px]">
+          <div data-tour="order-filters" className="grid gap-3 sm:grid-cols-[1fr_220px_220px]">
             <label className="relative block">
               <Search
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -619,7 +620,7 @@ export default function OrdersPage() {
             />
           </div>
           <div className="mt-3">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div data-tour="order-selection" className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
                 <input
                   type="checkbox"
@@ -659,9 +660,10 @@ export default function OrdersPage() {
                 <span>Shipment tracking</span>
                 <span className="text-right">Price</span>
               </div>
-              {visibleOrders.map((o) => (
+              {visibleOrders.map((o, index) => (
                 <div
                   key={key(o)}
+                  data-tour={index === 0 ? "order-first-row" : undefined}
                   className="flex items-start gap-2 px-3 py-3 transition hover:bg-forest-50 lg:grid lg:grid-cols-[42px_minmax(0,3fr)_repeat(3,minmax(0,1fr))] lg:items-center lg:gap-4"
                 >
                   <label className="flex flex-none cursor-pointer items-center justify-center pt-3 lg:pt-0">
@@ -680,6 +682,7 @@ export default function OrdersPage() {
                     />
                   </label>
                   <button
+                    data-tour={index === 0 ? "order-first-row-button" : undefined}
                     type="button"
                     onClick={() => setDetails(o)}
                     className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 text-left lg:col-span-4 lg:grid-cols-[minmax(0,3fr)_repeat(3,minmax(0,1fr))] lg:gap-4"
@@ -907,6 +910,7 @@ export default function OrdersPage() {
           aria-labelledby="manual-order-title"
         >
           <form
+            data-tour="manual-order-modal"
             onSubmit={requestManualOrderSave}
             className="flex h-dvh w-full max-w-3xl flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl"
           >
@@ -933,7 +937,7 @@ export default function OrdersPage() {
               </button>
             </div>
             <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4 sm:p-6">
-              <section>
+              <section data-tour="manual-order-customer">
                 <h3 className="mb-3 font-semibold text-forest-950">
                   Customer and delivery
                 </h3>
@@ -965,6 +969,8 @@ export default function OrdersPage() {
                   <label className="text-sm font-medium sm:col-span-2">
                     Initial status
                     <AdminSelect
+                      dataTour="manual-order-status-trigger"
+                      dataTourMenu="manual-order-status-menu"
                       value={manualStatus}
                       onChange={(value) => setManualStatus(value as Status)}
                       ariaLabel="Initial order status"
@@ -977,10 +983,11 @@ export default function OrdersPage() {
                   </label>
                 </div>
               </section>
-              <section>
+              <section data-tour="manual-order-items">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h3 className="font-semibold text-forest-950">Order items</h3>
                   <button
+                    data-tour="manual-add-product"
                     type="button"
                     onClick={addManualItem}
                     disabled={!products.length}
@@ -997,6 +1004,7 @@ export default function OrdersPage() {
                     return (
                       <div
                         key={`manual-item-${index}`}
+                        data-tour={index === manualItems.length - 1 ? "manual-order-item-row" : undefined}
                         className="grid gap-3 rounded-xl border bg-gray-50 p-3 sm:grid-cols-[minmax(0,1fr)_150px_90px_auto] sm:items-end"
                       >
                         <label className="text-xs font-medium text-gray-600">
@@ -1100,13 +1108,14 @@ export default function OrdersPage() {
                 </div>
               </section>
             </div>
-            <div className="flex flex-none flex-col-reverse gap-3 border-t bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div data-tour="manual-order-save" className="flex flex-none flex-col-reverse gap-3 border-t bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <p className="text-lg font-bold text-forest-900">
                 Total: ₱{manualTotal.toLocaleString("en-PH")}
               </p>
               <div className="flex flex-col-reverse gap-2 sm:flex-row">
-                <button
-                  type="button"
+              <button
+                data-tour="manual-order-close"
+                type="button"
                   onClick={() => setManualOpen(false)}
                   disabled={saving}
                   className="rounded-lg border px-5 py-3 font-semibold"
@@ -1167,6 +1176,7 @@ export default function OrdersPage() {
               </div>
               <div className="absolute right-4 top-4 sm:right-5 sm:top-5">
                 <button
+                  data-tour="order-details-close"
                   onClick={() => setDetails(null)}
                   className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"
                   aria-label="Close order details"
@@ -1176,7 +1186,7 @@ export default function OrdersPage() {
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 md:grid md:grid-cols-[minmax(0,1fr)_300px] md:gap-6 md:overflow-hidden">
-              <section className="min-h-0">
+              <section data-tour="order-details-items" className="min-h-0">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="font-semibold text-forest-950">Order items</h3>
                   <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
@@ -1222,7 +1232,7 @@ export default function OrdersPage() {
                   })}
                 </div>
               </section>
-              <aside className="mt-5 space-y-4 text-sm text-gray-600 md:mt-0 md:overflow-y-auto">
+              <aside data-tour="order-details-summary" className="mt-5 space-y-4 text-sm text-gray-600 md:mt-0 md:overflow-y-auto">
                 <section className="rounded-xl border border-gray-100 p-4">
                   <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold-600">
                     Delivery information
@@ -1300,6 +1310,7 @@ export default function OrdersPage() {
                 Close
               </button>
               <button
+                data-tour="order-manage-tracking"
                 onClick={() => openEdit(details)}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-forest-700 px-5 py-2.5 font-semibold text-white sm:w-auto"
               >
@@ -1340,14 +1351,16 @@ export default function OrdersPage() {
                   {bulkEditing ? "Bulk edit orders" : "Tracking details"}
                 </h2>
               </div>
-              <button onClick={() => setEditing(null)}>
+              <button data-tour="tracking-modal-close" onClick={() => setEditing(null)}>
                 <X />
               </button>
             </div>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div data-tour="tracking-modal-fields" className="mt-6 grid gap-4 sm:grid-cols-2">
               <label className="text-sm font-medium">
                 Status
                 <AdminSelect
+                  dataTour="tracking-status-trigger"
+                  dataTourMenu="tracking-status-menu"
                   value={form.status}
                   onChange={(value) =>
                     setForm({ ...form, status: value as Status })
@@ -1415,7 +1428,7 @@ export default function OrdersPage() {
                 />
               </label>
             </div>
-            <div className="mt-6 flex justify-end gap-3">
+            <div data-tour="tracking-save" className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setEditing(null)}
                 disabled={saving}

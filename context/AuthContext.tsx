@@ -14,7 +14,7 @@ import {
   signOut,
   updateProfile,
 } from 'firebase/auth'
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
+import { deleteDoc, doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { firebaseAuth, firestore } from '@/lib/firebase'
 
 type AuthContextValue = {
@@ -94,6 +94,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     window.localStorage.removeItem('verde-cart')
     window.localStorage.removeItem('verde-wishlist')
+    const deviceId = window.localStorage.getItem('verde-device-id')
+    if (firebaseAuth.currentUser && deviceId) {
+      await deleteDoc(
+        doc(firestore, 'users', firebaseAuth.currentUser.uid, 'devices', deviceId),
+      ).catch((error) => console.error('Unable to remove signed-out device:', error))
+    }
     await signOut(firebaseAuth)
   }
 

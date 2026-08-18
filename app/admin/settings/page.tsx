@@ -1143,8 +1143,23 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                {connectedDevices.length ? (
-                  connectedDevices.slice(0, 5).map((device) => {
+                {connectedDevices.some(
+                  (device) =>
+                    device.id === currentDeviceId ||
+                    (device.online &&
+                      presenceNow - (device.lastSeen?.toMillis() || 0) <
+                        150_000),
+                ) ? (
+                  connectedDevices
+                    .filter(
+                      (device) =>
+                        device.id === currentDeviceId ||
+                        (device.online &&
+                          presenceNow - (device.lastSeen?.toMillis() || 0) <
+                            150_000),
+                    )
+                    .slice(0, 5)
+                    .map((device) => {
                     const isOnline =
                       device.online &&
                       presenceNow - (device.lastSeen?.toMillis() || 0) <
@@ -1183,7 +1198,7 @@ export default function AdminSettingsPage() {
                         />
                       </div>
                     );
-                  })
+                    })
                 ) : (
                   <p className="rounded-xl bg-[#f5f3ed] px-4 py-6 text-center text-xs text-gray-500">
                     Registering this device...

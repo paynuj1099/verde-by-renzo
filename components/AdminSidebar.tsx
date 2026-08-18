@@ -111,6 +111,7 @@ export default function AdminSidebar() {
               <Link
                 key={label}
                 href={href}
+                data-tour={label === "Products" ? "admin-menu-products" : label === "Orders" ? "admin-menu-orders" : label === "New Arrivals" ? "admin-menu-new-arrivals" : undefined}
                 aria-label={label}
                 onClick={(event) => {
                   if (dummy) event.preventDefault();
@@ -140,18 +141,19 @@ export default function AdminSidebar() {
             );
           })}
         </nav>
-        <div className="mt-7 border-t border-[#2d3931] pt-6">
-          <span
-            className={`group relative flex items-center justify-start gap-3 rounded-xl px-3 py-3 text-sm text-[#56635a] ${collapsed ? "sm:justify-center" : ""}`}
+        <div className="mt-7 space-y-2 border-t border-[#2d3931] pt-6">
+          <Link
+            href="/admin/help"
+            className={`group relative flex items-center justify-start gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${collapsed ? "sm:justify-center" : ""} ${pathname === "/admin/help" ? "bg-[#c39a4b] text-[#111914]" : "text-[#c6cec8] hover:bg-white/5 hover:text-[#e4bd70]"}`}
           >
             <HelpCircle size={19} />
             <span className={collapsed ? "sm:hidden" : ""}>Help</span>
             {collapsed && (
               <span className="pointer-events-none absolute left-[calc(100%+12px)] top-1/2 z-50 hidden -translate-y-1/2 translate-x-1 whitespace-nowrap rounded-lg bg-forest-900 px-3 py-2 text-xs font-medium text-white opacity-0 shadow-lg transition-all duration-150 sm:block sm:group-hover:translate-x-0 sm:group-hover:opacity-100">
-                Help <span className="ml-2 text-gold-300">Soon</span>
+                Help
               </span>
             )}
-          </span>
+          </Link>
           <Link
             href="/admin/settings"
             className={`group relative flex items-center justify-start gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${collapsed ? "sm:justify-center" : ""} ${pathname === "/admin/settings" ? "bg-[#c39a4b] text-[#111914]" : "text-[#c6cec8] hover:bg-white/5 hover:text-[#e4bd70]"}`}

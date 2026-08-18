@@ -1,4 +1,5 @@
 import AdminSidebar from "@/components/AdminSidebar";
+import AdminTutorial from "@/components/AdminTutorial";
 
 export default function AdminLayout({
   children,
@@ -11,6 +12,7 @@ export default function AdminLayout({
       <div className="min-w-0 flex-1 pt-16 [&>main]:min-h-[calc(100vh-4rem)] sm:pt-0 sm:[&>main]:min-h-screen">
         {children}
       </div>
+      <AdminTutorial />
     </div>
   );
 }

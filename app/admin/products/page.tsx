@@ -653,7 +653,7 @@ export default function ProductAdminPage() {
     <main className="min-h-screen bg-[#f4f7f2] py-6 sm:py-8">
       <div className="mx-auto w-full max-w-[1480px] px-5 lg:px-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div>
+          <div data-tour="products-header">
             <p className="text-xs font-semibold uppercase tracking-[.2em] text-gold-600">
               Administration
             </p>
@@ -668,6 +668,7 @@ export default function ProductAdminPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <button
+              data-tour="add-product"
               type="button"
               onClick={openAddProduct}
               className={`items-center gap-2 rounded-lg bg-forest-600 px-5 py-3 font-semibold text-white ${isNewArrivalsPage ? "hidden" : "flex"}`}
@@ -732,6 +733,7 @@ export default function ProductAdminPage() {
                   {editingDocId ? "Edit Product" : "Add Product"}
                 </h2>
                 <button
+                  data-tour="product-edit-close"
                   type="button"
                   onClick={cancelEdit}
                   disabled={saving}
@@ -741,48 +743,50 @@ export default function ProductAdminPage() {
                   <X size={20} />
                 </button>
               </div>
-              <label className="block text-sm font-medium text-gray-700">
-                Product name
-                <input
-                  required
-                  placeholder="Product name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="mt-1 w-full rounded-lg border p-3 font-normal"
-                />
-              </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div data-tour="product-edit-basics" className="space-y-4 rounded-lg">
                 <label className="block text-sm font-medium text-gray-700">
-                  Category
-                  <AdminSelect
-                    value={form.category}
-                    onChange={(value) => setForm({ ...form, category: value })}
-                    ariaLabel="Product category"
-                    className="mt-1 font-normal"
-                    options={[
-                      { value: "APPAREL", label: "Apparel" },
-                      { value: "BAGS", label: "Bags" },
-                      { value: "ACCESSORIES", label: "Accessories" },
-                    ]}
-                  />
-                </label>
-                <label className="block text-sm font-medium text-gray-700">
-                  Price (PHP)
+                  Product name
                   <input
                     required
-                    min="0"
-                    step="0.01"
-                    type="number"
-                    placeholder="0.00"
-                    value={form.price}
-                    onChange={(e) =>
-                      setForm({ ...form, price: e.target.value })
-                    }
+                    placeholder="Product name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
                     className="mt-1 w-full rounded-lg border p-3 font-normal"
                   />
                 </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Category
+                    <AdminSelect
+                      value={form.category}
+                      onChange={(value) => setForm({ ...form, category: value })}
+                      ariaLabel="Product category"
+                      className="mt-1 font-normal"
+                      options={[
+                        { value: "APPAREL", label: "Apparel" },
+                        { value: "BAGS", label: "Bags" },
+                        { value: "ACCESSORIES", label: "Accessories" },
+                      ]}
+                    />
+                  </label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Price (PHP)
+                    <input
+                      required
+                      min="0"
+                      step="0.01"
+                      type="number"
+                      placeholder="0.00"
+                      value={form.price}
+                      onChange={(e) =>
+                        setForm({ ...form, price: e.target.value })
+                      }
+                      className="mt-1 w-full rounded-lg border p-3 font-normal"
+                    />
+                  </label>
+                </div>
               </div>
-              <fieldset>
+              <fieldset data-tour="product-edit-colors">
                 <legend className="text-sm font-medium text-gray-700">
                   Available colors{" "}
                   <span className="font-normal text-gray-400">
@@ -894,7 +898,7 @@ export default function ProductAdminPage() {
                 />
               </label>
               {form.colors.length > 0 && (
-                <fieldset className="rounded-lg border p-4">
+                <fieldset data-tour="product-edit-images" className="rounded-lg border p-4">
                   <legend className="px-1 text-sm font-medium text-gray-700">
                     Images paired to colors
                   </legend>
@@ -995,7 +999,7 @@ export default function ProductAdminPage() {
                   </div>
                 </fieldset>
               )}
-              <label className="block text-sm font-medium text-gray-700">
+              <label data-tour="product-edit-details" className="block text-sm font-medium text-gray-700">
                 Short description
                 <textarea
                   required
@@ -1008,7 +1012,7 @@ export default function ProductAdminPage() {
                   className="mt-1 w-full rounded-lg border p-3 font-normal"
                 />
               </label>
-              <label className="block text-sm font-medium text-gray-700">
+              <label data-tour="product-edit-full-description" className="block text-sm font-medium text-gray-700">
                 Full description
                 <textarea
                   placeholder="Detailed product description"
@@ -1020,7 +1024,7 @@ export default function ProductAdminPage() {
                   className="mt-1 w-full rounded-lg border p-3 font-normal"
                 />
               </label>
-              <label className="block text-sm font-medium text-gray-700">
+              <label data-tour="product-edit-materials" className="block text-sm font-medium text-gray-700">
                 Materials
                 <textarea
                   placeholder="One material per line"
@@ -1032,7 +1036,7 @@ export default function ProductAdminPage() {
                   className="mt-1 w-full rounded-lg border p-3 font-normal"
                 />
               </label>
-              <label className="block text-sm font-medium text-gray-700">
+              <label data-tour="product-edit-features" className="block text-sm font-medium text-gray-700">
                 Features
                 <textarea
                   placeholder="One feature per line"
@@ -1044,7 +1048,7 @@ export default function ProductAdminPage() {
                   className="mt-1 w-full rounded-lg border p-3 font-normal"
                 />
               </label>
-              <label className="block text-sm font-medium text-gray-700">
+              <label data-tour="product-edit-care" className="block text-sm font-medium text-gray-700">
                 Care instructions
                 <textarea
                   placeholder="One instruction per line"
@@ -1054,7 +1058,7 @@ export default function ProductAdminPage() {
                   className="mt-1 w-full rounded-lg border p-3 font-normal"
                 />
               </label>
-              <label className="block text-sm font-medium text-gray-700">
+              <label data-tour="product-edit-includes" className="block text-sm font-medium text-gray-700">
                 Package includes
                 <textarea
                   placeholder="One included item per line"
@@ -1066,7 +1070,7 @@ export default function ProductAdminPage() {
                   className="mt-1 w-full rounded-lg border p-3 font-normal"
                 />
               </label>
-              <label className="block text-sm font-medium text-gray-700">
+              <label data-tour="product-edit-size-guide" className="block text-sm font-medium text-gray-700">
                 Size guide link{" "}
                 <span className="font-normal text-gray-400">(optional)</span>
                 <input
@@ -1078,7 +1082,7 @@ export default function ProductAdminPage() {
                   className="mt-1 w-full rounded-lg border p-3 font-normal"
                 />
               </label>
-              <div className="space-y-2 rounded-lg bg-gray-50 p-3">
+              <div data-tour="product-edit-visibility" className="space-y-2 rounded-lg bg-gray-50 p-3">
                 <label className="flex items-center gap-3 text-sm font-medium text-gray-700">
                   <input
                     type="checkbox"
@@ -1113,7 +1117,7 @@ export default function ProductAdminPage() {
                   Active and visible in Shop
                 </label>
               </div>
-              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <div data-tour="product-edit-save" className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={cancelEdit}
@@ -1147,7 +1151,7 @@ export default function ProductAdminPage() {
               if (event.target === event.currentTarget) setArrivalPreview(null);
             }}
           >
-            <div className="w-fit max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div data-tour="new-arrival-preview-modal" className="w-fit max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl bg-white shadow-2xl">
               <div className="flex items-center justify-between border-b px-5 py-4">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[.2em] text-gold-600">
@@ -1161,6 +1165,7 @@ export default function ProductAdminPage() {
                   </h2>
                 </div>
                 <button
+                  data-tour="new-arrival-preview-close"
                   type="button"
                   onClick={() => setArrivalPreview(null)}
                   className="flex h-10 w-10 items-center justify-center rounded-full border text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
@@ -1193,7 +1198,7 @@ export default function ProductAdminPage() {
                 shown
               </span>
             </div>
-            <div className="mb-4 space-y-3">
+            <div data-tour="product-filters" className="mb-4 space-y-3">
               <div className="relative">
                 <Search
                   size={17}
@@ -1240,8 +1245,8 @@ export default function ProductAdminPage() {
                 />
               </div>
             </div>
-            <div className="max-h-[560px] space-y-3 overflow-y-auto">
-              {paginatedCatalogProducts.map((product) => {
+            <div data-tour="product-list" className="max-h-[560px] space-y-3 overflow-y-auto">
+              {paginatedCatalogProducts.map((product, index) => {
                 const image = Object.values(product.images)[0];
                 return (
                   <div
@@ -1278,6 +1283,7 @@ export default function ProductAdminPage() {
                       </p>
                     </div>
                     <AdminRowActions
+                      tourPrefix={index === 0 ? "product-action" : undefined}
                       previewHref={`/shop/${product.id}`}
                       itemName={`${product.name} product details`}
                       onEdit={() => editProduct(product)}
@@ -1360,7 +1366,7 @@ export default function ProductAdminPage() {
               {products.filter((product) => product.isNew).length} selected
             </span>
           </div>
-          <div className="mb-6 grid gap-3 rounded-2xl border border-[#e4ded3] bg-white p-3 lg:grid-cols-[minmax(260px,1.5fr)_minmax(180px,.75fr)_minmax(180px,.75fr)]">
+          <div data-tour="new-arrival-filters" className="mb-6 grid gap-3 rounded-2xl border border-[#e4ded3] bg-white p-3 lg:grid-cols-[minmax(260px,1.5fr)_minmax(180px,.75fr)_minmax(180px,.75fr)]">
             <div className="relative lg:self-start">
               <Search
                 size={17}
@@ -1410,15 +1416,17 @@ export default function ProductAdminPage() {
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {paginatedArrivalProducts.map((product) => {
+            {paginatedArrivalProducts.map((product, index) => {
               const image = Object.values(product.images)[0];
               const displayImage = product.newArrivalImage || image;
               return (
                 <div
                   key={`arrival-${product.docId}`}
+                  data-tour={index === 0 ? "new-arrival-first-card" : undefined}
                   className={`overflow-hidden rounded-2xl border shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg ${product.isNew ? "border-gold-300 bg-[#fffaf0]" : "border-gray-200 bg-white"}`}
                 >
                   <div
+                    data-tour={index === 0 ? "new-arrival-image" : undefined}
                     onDragOver={(e) => {
                       e.preventDefault();
                       e.dataTransfer.dropEffect = "copy";
@@ -1481,6 +1489,7 @@ export default function ProductAdminPage() {
                       <label className="flex items-center gap-2 text-[10px] uppercase text-gray-500">
                         <span>Order</span>
                         <input
+                          data-tour={index === 0 ? "new-arrival-order" : undefined}
                           type="number"
                           min="1"
                           defaultValue={product.newArrivalOrder ?? product.id}
@@ -1498,6 +1507,7 @@ export default function ProductAdminPage() {
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-2">
                       <button
+                        data-tour={index === 0 ? "new-arrival-preview-button" : undefined}
                         type="button"
                         onClick={() => setArrivalPreview(product)}
                         className="flex items-center justify-center gap-2 rounded-lg border border-gold-200 bg-white px-3 py-2 text-sm font-semibold text-gold-700 transition hover:bg-gold-50"
@@ -1505,6 +1515,7 @@ export default function ProductAdminPage() {
                         <Eye size={16} /> Preview
                       </button>
                       <button
+                        data-tour={index === 0 ? "new-arrival-toggle" : undefined}
                         type="button"
                         disabled={saving}
                         onClick={() =>
@@ -1536,7 +1547,7 @@ export default function ProductAdminPage() {
             )}
           </div>
           {arrivalEditorProducts.length > newArrivalPageSize && (
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+            <div data-tour="new-arrival-pagination" className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
               <p className="text-sm text-gray-500">
                 Page {currentNewArrivalPage} of {newArrivalPageCount}
               </p>
