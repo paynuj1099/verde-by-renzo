@@ -213,7 +213,9 @@ export default function ProductAdminPage() {
       const authResponse = await fetch('/api/imagekit-auth', {
         headers: { Authorization: `Bearer ${idToken}` },
       })
-      const auth = await authResponse.json()
+      const auth = await authResponse.json().catch(() => ({
+        error: `Upload authorization failed on the server (${authResponse.status}).`,
+      }))
       if (!authResponse.ok) throw new Error(auth.error || 'Unable to authorize upload.')
       const result = await upload({
         file,
@@ -268,7 +270,9 @@ export default function ProductAdminPage() {
     try {
       const idToken = await user.getIdToken()
       const authResponse = await fetch('/api/imagekit-auth', { headers: { Authorization: `Bearer ${idToken}` } })
-      const auth = await authResponse.json()
+      const auth = await authResponse.json().catch(() => ({
+        error: `Upload authorization failed on the server (${authResponse.status}).`,
+      }))
       if (!authResponse.ok) throw new Error(auth.error || 'Unable to authorize upload.')
       const productSlug = product.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'product'
       const result = await upload({

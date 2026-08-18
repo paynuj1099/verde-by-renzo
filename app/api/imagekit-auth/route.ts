@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUploadAuthParams } from '@imagekit/next/server'
-import { adminAuth } from '@/lib/firebaseAdmin'
+import { getAdminAuth } from '@/lib/firebaseAdmin'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required.' }, { status: 401 })
     }
 
-    const decodedToken = await adminAuth.verifyIdToken(authorization.slice(7))
+    const decodedToken = await getAdminAuth().verifyIdToken(authorization.slice(7))
     if (decodedToken.admin !== true) {
       return NextResponse.json({ error: 'Administrator access required.' }, { status: 403 })
     }
@@ -29,6 +29,11 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Unable to authorize ImageKit upload:', error)
-    return NextResponse.json({ error: 'Unable to authorize upload.' }, { status: 401 })
+    const message = error instanceof Error ? error.message : 'Unknown server error'
+    const configurationError = message.includes('credential') || message.includes('default credentials') || message.includes('service account')
+    return NextResponse.json(
+      { error: configurationError ? 'Firebase Admin is not configured on the server.' : 'Unable to authorize upload.' },
+      { status: configurationError ? 503 : 401 }
+    )
   }
 }

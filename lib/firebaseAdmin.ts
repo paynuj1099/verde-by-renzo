@@ -1,14 +1,17 @@
 import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 
-const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
-const credential = serviceAccountJson
-  ? cert(JSON.parse(serviceAccountJson))
-  : applicationDefault()
+export function getAdminAuth() {
+  const existingApp = getApps()[0]
+  if (existingApp) return getAuth(existingApp)
 
-const adminApp = getApps()[0] || initializeApp({
-  credential,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-})
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+  const credential = serviceAccountJson
+    ? cert(JSON.parse(serviceAccountJson))
+    : applicationDefault()
 
-export const adminAuth = getAuth(adminApp)
+  return getAuth(initializeApp({
+    credential,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  }))
+}
