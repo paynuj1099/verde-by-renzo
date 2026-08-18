@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   CheckCircle2,
@@ -8,26 +8,19 @@ import {
   Mail,
   Twitter,
   X,
-} from 'lucide-react'
+} from "lucide-react";
 
-import Image from 'next/image'
-import Link from 'next/link'
-import {
-  FormEvent,
-  useEffect,
-  useState,
-} from 'react'
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 
 export default function Footer() {
-  const [
-    email,
-    setEmail,
-  ] = useState('')
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
+  const [email, setEmail] = useState("");
 
-  const [
-    showSuccessModal,
-    setShowSuccessModal,
-  ] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   /*
    * ============================
@@ -39,26 +32,22 @@ export default function Footer() {
    * provider. It only displays
    * a success confirmation.
    */
-  const handleSubscribe = (
-    event: FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault()
+  const handleSubscribe = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-    const trimmedEmail =
-      email.trim()
+    const trimmedEmail = email.trim();
 
     if (!trimmedEmail) {
-      return
+      return;
     }
 
-    setShowSuccessModal(true)
-    setEmail('')
-  }
+    setShowSuccessModal(true);
+    setEmail("");
+  };
 
-  const closeSuccessModal =
-    () => {
-      setShowSuccessModal(false)
-    }
+  const closeSuccessModal = () => {
+    setShowSuccessModal(false);
+  };
 
   /*
    * Close the modal with Escape
@@ -67,46 +56,35 @@ export default function Footer() {
    */
   useEffect(() => {
     if (!showSuccessModal) {
-      return
+      return;
     }
 
-    const previousOverflow =
-      document.body.style.overflow
+    const previousOverflow = document.body.style.overflow;
 
-    document.body.style.overflow =
-      'hidden'
+    document.body.style.overflow = "hidden";
 
-    const handleEscape = (
-      event: KeyboardEvent
-    ) => {
-      if (event.key === 'Escape') {
-        closeSuccessModal()
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeSuccessModal();
       }
-    }
+    };
 
-    window.addEventListener(
-      'keydown',
-      handleEscape
-    )
+    window.addEventListener("keydown", handleEscape);
 
     return () => {
-      window.removeEventListener(
-        'keydown',
-        handleEscape
-      )
+      window.removeEventListener("keydown", handleEscape);
 
-      document.body.style.overflow =
-        previousOverflow
-    }
-  }, [showSuccessModal])
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showSuccessModal]);
 
   return (
     <>
-      <footer className="mt-16 bg-[#0a0f0a] text-white sm:mt-20">
+      <footer
+        className={`${isHomePage ? "mt-0" : "mt-16 sm:mt-20"} bg-[#0a0f0a] text-white`}
+      >
         <div className="container py-10 sm:py-12 lg:py-16">
-
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
-
             {/* ======================= */}
             {/* BRAND */}
             {/* ======================= */}
@@ -133,7 +111,6 @@ export default function Footer() {
               {/* SOCIAL MEDIA */}
 
               <div className="flex items-center gap-3">
-
                 <a
                   href="#"
                   className="group flex h-10 w-10 items-center justify-center rounded-full bg-white/5 transition-all duration-300 hover:bg-gold-500"
@@ -177,7 +154,6 @@ export default function Footer() {
                     className="text-gray-400 group-hover:text-gray-900"
                   />
                 </a>
-
               </div>
             </div>
 
@@ -299,14 +275,8 @@ export default function Footer() {
                 Subscribe to get special offers and updates.
               </p>
 
-              <form
-                onSubmit={
-                  handleSubscribe
-                }
-                className="flex flex-col gap-3"
-              >
+              <form onSubmit={handleSubscribe} className="flex flex-col gap-3">
                 <div className="relative">
-
                   <Mail
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
                     size={16}
@@ -315,20 +285,13 @@ export default function Footer() {
                   <input
                     type="email"
                     value={email}
-                    onChange={(
-                      event
-                    ) =>
-                      setEmail(
-                        event.target.value
-                      )
-                    }
+                    onChange={(event) => setEmail(event.target.value)}
                     placeholder="Your email"
                     required
                     autoComplete="email"
                     aria-label="Newsletter email address"
                     className="w-full rounded-lg border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-gray-200 transition-colors placeholder:text-gray-600 focus:border-gold-500 focus:outline-none"
                   />
-
                 </div>
 
                 <button
@@ -337,10 +300,8 @@ export default function Footer() {
                 >
                   Subscribe
                 </button>
-
               </form>
             </div>
-
           </div>
 
           {/* ======================= */}
@@ -348,15 +309,12 @@ export default function Footer() {
           {/* ======================= */}
 
           <div className="mt-10 border-t border-white/10 pt-6 sm:mt-12 sm:pt-8">
-
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-
               <p className="text-xs text-gray-500 sm:text-sm">
                 &copy; 2026 Verde by Renzo. All rights reserved.
               </p>
 
               <div className="flex gap-4 text-xs sm:text-sm">
-
                 <Link
                   href="/terms"
                   className="text-gray-500 transition-colors hover:text-gold-500"
@@ -364,9 +322,7 @@ export default function Footer() {
                   Terms
                 </Link>
 
-                <span className="text-gray-600">
-                  •
-                </span>
+                <span className="text-gray-600">•</span>
 
                 <Link
                   href="/privacy"
@@ -374,13 +330,9 @@ export default function Footer() {
                 >
                   Privacy
                 </Link>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
       </footer>
 
@@ -391,34 +343,24 @@ export default function Footer() {
       {showSuccessModal && (
         <div
           className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
-          onClick={
-            closeSuccessModal
-          }
+          onClick={closeSuccessModal}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="newsletter-success-title"
-            onClick={(
-              event
-            ) =>
-              event.stopPropagation()
-            }
+            onClick={(event) => event.stopPropagation()}
             className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
           >
             {/* CLOSE */}
 
             <button
               type="button"
-              onClick={
-                closeSuccessModal
-              }
+              onClick={closeSuccessModal}
               className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
               aria-label="Close subscription confirmation"
             >
-              <X
-                size={20}
-              />
+              <X size={20} />
             </button>
 
             {/* GOLD ACCENT */}
@@ -426,17 +368,14 @@ export default function Footer() {
             <div className="h-1.5 w-full bg-gold-500" />
 
             <div className="px-7 pb-7 pt-9 text-center sm:px-9 sm:pb-9">
-
               {/* ICON */}
 
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-forest-50">
-
                 <CheckCircle2
                   size={34}
                   className="text-forest-600"
                   strokeWidth={1.8}
                 />
-
               </div>
 
               {/* TITLE */}
@@ -460,9 +399,7 @@ export default function Footer() {
 
               <button
                 type="button"
-                onClick={
-                  closeSuccessModal
-                }
+                onClick={closeSuccessModal}
                 className="w-full rounded-lg bg-forest-600 px-6 py-3 font-semibold text-white transition-all hover:bg-forest-700 active:scale-[0.99]"
               >
                 Continue Exploring
@@ -471,11 +408,10 @@ export default function Footer() {
               <p className="mt-4 text-xs text-gray-400">
                 Welcome to the Verde community.
               </p>
-
             </div>
           </div>
         </div>
       )}
     </>
-  )
+  );
 }

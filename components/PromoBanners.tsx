@@ -1,44 +1,51 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import Image from 'next/image'
-import { useSiteAssets } from '@/context/SiteAssetsContext'
+import Link from "next/link";
+import Image from "next/image";
+import { useSiteAssets } from "@/context/SiteAssetsContext";
 
 export default function PromoBanners() {
-  const { getAsset } = useSiteAssets()
+  const { getAsset } = useSiteAssets();
   return (
-    <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
+    <section className="bg-[#111914] py-16 sm:py-20 lg:py-28">
       <div className="container">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+        <div className="mb-10 max-w-xl sm:mb-14">
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-[#cda653] sm:text-xs">
+            The Verde Edit
+          </p>
+          <h2 className="font-serif text-3xl leading-tight text-[#f2e8d5] sm:text-4xl lg:text-5xl">
+            Made for life on and off the course.
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 sm:gap-6 lg:gap-8">
           {/* Banner 1 - Signature Apparel */}
-          <div className="relative rounded-lg overflow-hidden group min-h-[300px] sm:min-h-[400px] lg:min-h-[500px]">
-            
+          <div className="group relative min-h-[360px] overflow-hidden border border-white/10 sm:min-h-[440px] lg:min-h-[560px]">
             {/* Background Image */}
             <Image
-              src={getAsset('promo-apparel')}
+              src={getAsset("promo-apparel")}
               alt="Signature Golf Apparel"
               fill
-              className="object-cover object-center"
+              className="object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-[1.035]"
               priority
             />
 
             {/* Optional dark overlay for text readability */}
-            <div className="absolute inset-0 bg-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#07100a]/90 via-black/20 to-black/5" />
 
             <div className="relative z-10 h-full flex flex-col justify-between p-6 sm:p-8 lg:p-12">
               <div>
-                <p className="text-xs sm:text-sm uppercase tracking-widest text-white/80 mb-2">
+                <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#e1ba68] sm:text-xs">
                   Signature Apparel
                 </p>
 
-                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-serif text-white mb-3 sm:mb-4">
+                <h3 className="mb-4 max-w-md font-serif text-3xl leading-tight text-[#fff8ea] sm:text-4xl lg:text-5xl">
                   Elevated Polos for the Modern Golfer
                 </h3>
               </div>
 
               <Link
                 href="/shop"
-                className="self-start px-5 sm:px-6 py-2.5 sm:py-3 bg-white hover:bg-forest-600 hover:text-white transition-all text-xs sm:text-sm uppercase tracking-wider font-semibold rounded"
+                className="self-start border border-[#dfb65e] bg-[#dfb65e] px-6 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#142219] transition-all hover:bg-[#edcc82] sm:px-7 sm:text-xs"
               >
                 Shop Now
               </Link>
@@ -48,33 +55,32 @@ export default function PromoBanners() {
           {/* Right Column */}
           <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8">
             {/* Banner 2 - Course Essentials */}
-            <div className="relative bg-gray-200 rounded-lg overflow-hidden group min-h-[200px] sm:min-h-[240px]">
+            <div className="group relative min-h-[240px] overflow-hidden border border-white/10 sm:min-h-[270px]">
+              {/* Background Image */}
+              <Image
+                src={getAsset("promo-accessories")}
+                alt="Signature Golf Apparel"
+                fill
+                className="object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-[1.035]"
+                priority
+              />
 
-            {/* Background Image */}
-            <Image
-              src={getAsset('promo-accessories')}
-              alt="Signature Golf Apparel"
-              fill
-              className="object-cover object-center"
-              priority
-            />
-
-            {/* Optional dark overlay for text readability */}
-            <div className="absolute inset-0 bg-black/20" />
+              {/* Optional dark overlay for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#07100a]/75 via-black/25 to-transparent" />
 
               <div className="relative h-full flex flex-col justify-between p-6 sm:p-8 lg:p-12">
                 <div>
-                  <p className="text-xs sm:text-sm uppercase tracking-widest text-white mb-2">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#e1ba68] sm:text-xs">
                     Course Essentials
                   </p>
 
-                  <h3 className="text-xl sm:text-2xl lg:text-3xl font-serif text-white mb-3 sm:mb-4">
+                  <h3 className="mb-4 font-serif text-2xl text-[#fff8ea] sm:text-3xl">
                     Designed for Every Round
                   </h3>
                 </div>
                 <Link
                   href="/shop"
-                  className="self-start px-5 sm:px-6 py-2.5 sm:py-3 bg-white hover:bg-forest-600 hover:text-white transition-all text-xs sm:text-sm uppercase tracking-wider font-semibold rounded"
+                  className="self-start border-b border-[#dfb65e] pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#f5dfad] transition-colors hover:text-white sm:text-xs"
                 >
                   Shop Now
                 </Link>
@@ -84,31 +90,31 @@ export default function PromoBanners() {
             {/* Bottom Row - Only Footwear Banner Remains */}
             <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8">
               {/* Banner 3 - Footwear */}
-              <div className="relative bg-gray-200 rounded-lg overflow-hidden group min-h-[200px] sm:min-h-[240px]">
+              <div className="group relative min-h-[240px] overflow-hidden border border-white/10 sm:min-h-[270px]">
                 {/* Background Image */}
                 <Image
-                  src={getAsset('promo-lifestyle')}
+                  src={getAsset("promo-lifestyle")}
                   alt="Signature Golf Apparel"
                   fill
-                  className="object-cover object-center"
+                  className="object-cover object-center transition-transform duration-1000 ease-out group-hover:scale-[1.035]"
                   priority
                 />
 
                 {/* Optional dark overlay for text readability */}
-                <div className="absolute inset-0 bg-black/20" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#07100a]/80 via-black/25 to-transparent" />
 
                 <div className="relative h-full flex flex-col justify-between p-4 sm:p-6 lg:p-8">
                   <div>
-                    <p className="text-[10px] sm:text-xs uppercase tracking-widest text-gray-600 mb-1 sm:mb-2">
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#e1ba68] sm:text-xs">
                       The Details
                     </p>
-                    <h3 className="text-sm sm:text-base lg:text-xl font-serif text-gray-900 mb-1 sm:mb-2 leading-tight">
+                    <h3 className="mb-2 max-w-xs font-serif text-xl leading-tight text-[#fff8ea] sm:text-2xl">
                       Small Essentials. Better Rounds.
                     </h3>
                   </div>
                   <Link
                     href="/shop"
-                    className="self-start px-3 sm:px-4 py-2 bg-white hover:bg-forest-600 hover:text-white transition-all text-[10px] sm:text-xs uppercase tracking-wider font-semibold rounded"
+                    className="self-start border-b border-[#dfb65e] pb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#f5dfad] transition-colors hover:text-white sm:text-xs"
                   >
                     Shop Now
                   </Link>
@@ -119,5 +125,5 @@ export default function PromoBanners() {
         </div>
       </div>
     </section>
-  )
+  );
 }
