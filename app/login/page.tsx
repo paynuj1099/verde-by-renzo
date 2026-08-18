@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -15,6 +15,8 @@ import { useAuth } from '@/context/AuthContext'
 
 export default function LoginPage() {
   const {
+    user,
+    loading,
     signInWithGoogle,
     signInWithGithub,
     signInWithEmail,
@@ -37,6 +39,12 @@ export default function LoginPage() {
 
   const [loginError, setLoginError] = useState('')
 
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/')
+    }
+  }, [loading, router, user])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -45,7 +53,7 @@ export default function LoginPage() {
 
     try {
       await signInWithEmail(email, password)
-      router.push('/')
+      router.replace('/')
     } catch (error) {
       const code = (error as { code?: string }).code
 
@@ -67,7 +75,7 @@ export default function LoginPage() {
       const signedIn = await signInWithGoogle()
 
       if (signedIn) {
-        router.push('/')
+        router.replace('/')
       }
     } catch (error) {
       console.error('Google login error:', error)
@@ -97,7 +105,7 @@ export default function LoginPage() {
       console.log('GitHub sign-in result:', signedIn)
 
       if (signedIn) {
-        router.push('/')
+        router.replace('/')
       }
 
       /*
@@ -136,7 +144,7 @@ export default function LoginPage() {
       const linked = await linkPendingGithubWithGoogle()
 
       if (linked) {
-        router.push('/')
+        router.replace('/')
       }
     } catch (error) {
       console.error('GitHub account linking error:', error)
