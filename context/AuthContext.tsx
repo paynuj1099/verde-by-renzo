@@ -11,6 +11,7 @@ import {
   getRedirectResult,
   linkWithCredential,
   linkWithPopup,
+  linkWithRedirect,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -253,6 +254,24 @@ export function AuthProvider({
           return
         }
 
+        /*
+         * A redirect result can come from either:
+         * - signInWithRedirect()
+         * - linkWithRedirect()
+         *
+         * Linking a provider must NOT replace the provider that originally
+         * authenticated the current browser session.
+         */
+        if (result.operationType === 'link') {
+          setUser(result.user)
+          setConnectedProviders(getConnectedProviders(result.user))
+
+          window.sessionStorage.removeItem('verde-link-provider')
+
+          await saveUserProfile(result.user)
+          return
+        }
+
         let loginProvider: LoginProvider | undefined
 
         if (result.providerId === 'google.com') {
@@ -263,14 +282,23 @@ export function AuthProvider({
           loginProvider = 'github'
         }
 
+        if (loginProvider) {
+          window.sessionStorage.setItem(
+            'verde-login-provider',
+            loginProvider,
+          )
+        }
+
         await saveUserProfile(
           result.user,
           loginProvider,
         )
       })
       .catch((error) => {
+        window.sessionStorage.removeItem('verde-link-provider')
+
         console.error(
-          'OAuth redirect sign-in failed:',
+          'OAuth redirect operation failed:',
           error,
         )
       })
@@ -552,17 +580,34 @@ export function AuthProvider({
       prompt: 'select_account',
     })
 
-    const result = await linkWithPopup(
-      currentUser,
-      provider,
-    )
+    try {
+      const result = await linkWithPopup(
+        currentUser,
+        provider,
+      )
 
-    setUser(result.user)
-    setConnectedProviders(getConnectedProviders(result.user))
+      setUser(result.user)
+      setConnectedProviders(getConnectedProviders(result.user))
 
-    // Linking Google does not mean the current session was authenticated
-    // with Google. Preserve the provider that actually signed the user in.
-    await saveUserProfile(result.user)
+      // Linking Google does not mean the current session was authenticated
+      // with Google. Preserve the provider that actually signed the user in.
+      await saveUserProfile(result.user)
+    } catch (error: any) {
+      if (error?.code === 'auth/popup-blocked') {
+        window.sessionStorage.setItem(
+          'verde-link-provider',
+          'google',
+        )
+
+        await linkWithRedirect(
+          currentUser,
+          provider,
+        )
+        return
+      }
+
+      throw error
+    }
   }
 
   /*
@@ -591,16 +636,33 @@ export function AuthProvider({
       prompt: 'select_account',
     })
 
-    const result = await linkWithPopup(
-      currentUser,
-      provider,
-    )
+    try {
+      const result = await linkWithPopup(
+        currentUser,
+        provider,
+      )
 
-    setUser(result.user)
-    setConnectedProviders(getConnectedProviders(result.user))
+      setUser(result.user)
+      setConnectedProviders(getConnectedProviders(result.user))
 
-    // Linking GitHub does not change the provider used for this session.
-    await saveUserProfile(result.user)
+      // Linking GitHub does not change the provider used for this session.
+      await saveUserProfile(result.user)
+    } catch (error: any) {
+      if (error?.code === 'auth/popup-blocked') {
+        window.sessionStorage.setItem(
+          'verde-link-provider',
+          'github',
+        )
+
+        await linkWithRedirect(
+          currentUser,
+          provider,
+        )
+        return
+      }
+
+      throw error
+    }
   }
 
   /*
