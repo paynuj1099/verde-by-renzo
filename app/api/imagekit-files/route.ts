@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAdminAuth } from '@/lib/firebaseAdmin'
+import { verifyAdminToken } from '@/lib/serverAuth'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -8,8 +8,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const authorization = request.headers.get('authorization')
     if (!authorization?.startsWith('Bearer ')) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 })
-    const decodedToken = await getAdminAuth().verifyIdToken(authorization.slice(7))
-    if (decodedToken.admin !== true) return NextResponse.json({ error: 'Administrator access required.' }, { status: 403 })
+    if (!await verifyAdminToken(authorization.slice(7))) return NextResponse.json({ error: 'Administrator access required.' }, { status: 403 })
 
     const { fileIds } = await request.json() as { fileIds?: string[] }
     const uniqueFileIds = Array.from(new Set((fileIds || []).filter((fileId) => typeof fileId === 'string' && fileId)))
