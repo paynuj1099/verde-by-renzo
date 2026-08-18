@@ -10,6 +10,7 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   updateProfile,
 } from 'firebase/auth'
@@ -19,7 +20,7 @@ import { firebaseAuth, firestore } from '@/lib/firebase'
 type AuthContextValue = {
   user: User | null
   loading: boolean
-  signInWithGoogle: () => Promise<void>
+  signInWithGoogle: () => Promise<boolean>
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (details: { name: string; email: string; phone: string; password: string }) => Promise<void>
   resetPassword: (email: string) => Promise<void>
@@ -56,8 +57,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signInWithGoogle = async () => {
-    const result = await signInWithPopup(firebaseAuth, new GoogleAuthProvider())
-    await saveUserProfile(result.user)
+    const provider = new GoogleAuthProvider()
+    provider.setCustomParameters({ prompt: 'select_account' })
+
+    try {
+      const result = await signInWithPopup(firebaseAuth, provider)
+      await saveUserProfile(result.user)
+      return true
+    } catch (error: any) {
+      if (error?.code === 'auth/popup-blocked' || error?.code === 'auth/popup-closed-by-user') {
+        await signInWithRedirect(firebaseAuth, provider)
+        return false
+      }
+
+      throw error
+    }
   }
   const signInWithEmail = async (email: string, password: string) => {
     const result = await signInWithEmailAndPassword(firebaseAuth, email, password)

@@ -88,8 +88,8 @@ export default function SignupPage() {
   }
 
   const handleGoogleSignup = async () => {
-    await signInWithGoogle()
-    router.push('/')
+    const signedIn = await signInWithGoogle()
+    if (signedIn) router.push('/')
   }
 
   const handleChange = (field: string, value: string) => {

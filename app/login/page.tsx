@@ -35,8 +35,8 @@ export default function LoginPage() {
   }
 
   const handleGoogleLogin = async () => {
-    await signInWithGoogle()
-    router.push('/')
+    const signedIn = await signInWithGoogle()
+    if (signedIn) router.push('/')
   }
 
   return (
