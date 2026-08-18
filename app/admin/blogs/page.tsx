@@ -14,15 +14,23 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getIdTokenResult } from "firebase/auth";
-import { AlertTriangle, ArrowLeft, Plus, Search, Trash2, Upload, X } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Plus,
+  Search,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { firestore } from "@/lib/firebase";
 import type { BlogPostRecord } from "@/context/BlogContext";
 import SiteAssetImage from "@/components/SiteAssetImage";
 import AdminRowActions from "@/components/AdminRowActions";
 import AdminPageSkeleton from "@/components/AdminPageSkeleton";
-import AdminToast from '@/components/AdminToast';
-import AdminConfirmModal from '@/components/AdminConfirmModal'
+import AdminToast from "@/components/AdminToast";
+import AdminConfirmModal from "@/components/AdminConfirmModal";
 type BlogForm = Omit<BlogPostRecord, "id">;
 const today = () => new Date().toISOString().slice(0, 10);
 const emptyForm = (): BlogForm => ({
@@ -145,13 +153,15 @@ export default function BlogAdminPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         const auth = await response.json();
-        if (!response.ok) throw new Error(auth.error || "Upload authorization failed.");
+        if (!response.ok)
+          throw new Error(auth.error || "Upload authorization failed.");
         const result = await upload({
           file: pendingCover,
-          fileName: `blog-${form.slug || form.title || pendingCover.name}`.replace(
-            /[^a-zA-Z0-9._-]/g,
-            "-",
-          ),
+          fileName:
+            `blog-${form.slug || form.title || pendingCover.name}`.replace(
+              /[^a-zA-Z0-9._-]/g,
+              "-",
+            ),
           folder: "/verdebyrenzo/blogs",
           useUniqueFileName: true,
           token: auth.token,
@@ -184,7 +194,11 @@ export default function BlogAdminPage() {
           ...fields,
           createdAt: serverTimestamp(),
         });
-      if (pendingCover && form.imageFileId && form.imageFileId !== uploadedFileId) {
+      if (
+        pendingCover &&
+        form.imageFileId &&
+        form.imageFileId !== uploadedFileId
+      ) {
         const token = await user!.getIdToken();
         const cleanupResponse = await fetch("/api/imagekit-files", {
           method: "DELETE",
@@ -195,7 +209,9 @@ export default function BlogAdminPage() {
           body: JSON.stringify({ fileIds: [form.imageFileId] }),
         });
         if (!cleanupResponse.ok)
-          console.error("The previous blog cover could not be removed from ImageKit.");
+          console.error(
+            "The previous blog cover could not be removed from ImageKit.",
+          );
       }
       if (coverPreview) URL.revokeObjectURL(coverPreview);
       setPendingCover(null);
@@ -216,7 +232,9 @@ export default function BlogAdminPage() {
           body: JSON.stringify({ fileIds: [uploadedFileId] }),
         }).catch(() => undefined);
       }
-      setMessage(error instanceof Error ? error.message : "Unable to save article.");
+      setMessage(
+        error instanceof Error ? error.message : "Unable to save article.",
+      );
     } finally {
       setSaving(false);
       setUploading(false);
@@ -266,8 +284,7 @@ export default function BlogAdminPage() {
       setSaving(false);
     }
   };
-  if (loading || allowed === null)
-    return <AdminPageSkeleton variant="blogs" />;
+  if (loading || allowed === null) return <AdminPageSkeleton variant="blogs" />;
   if (!allowed)
     return (
       <main className="min-h-screen pt-36 text-center">
@@ -297,7 +314,17 @@ export default function BlogAdminPage() {
             Add article
           </button>
         </div>
-        <AdminToast message={message} onDismiss={() => setMessage('')} tone={message.includes('Unable') || message.includes('failed') || message.includes('error') ? 'error' : 'success'} />
+        <AdminToast
+          message={message}
+          onDismiss={() => setMessage("")}
+          tone={
+            message.includes("Unable") ||
+            message.includes("failed") ||
+            message.includes("error")
+              ? "error"
+              : "success"
+          }
+        />
         <div className="rounded-2xl border bg-white p-4 sm:p-6">
           <label className="relative block">
             <Search className="absolute left-3 top-3 text-gray-400" size={18} />
@@ -315,22 +342,22 @@ export default function BlogAdminPage() {
                 className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center"
               >
                 <div className="relative h-24 w-full flex-none overflow-hidden rounded-lg bg-gray-100 sm:h-16 sm:w-24">
-                {post.imageUrl ? (
-                  <Image
-                    src={post.imageUrl}
-                    alt={post.title}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <SiteAssetImage
-                    assetId={post.imageAssetId || "blog-placeholder"}
-                    alt={post.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 640px) 100vw, 96px"
-                  />
-                )}
+                  {post.imageUrl ? (
+                    <Image
+                      src={post.imageUrl}
+                      alt={post.title}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <SiteAssetImage
+                      assetId={post.imageAssetId || "blog-placeholder"}
+                      alt={post.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, 96px"
+                    />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap gap-2">
@@ -362,52 +389,53 @@ export default function BlogAdminPage() {
               </div>
             ))}
           </div>
-        </div>
-        {matchingPosts.length > pageSize && (
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white px-4 py-3">
-            <p className="text-sm text-gray-500">
-              Page {currentPage} of {pageCount}
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={currentPage === 1}
-                onClick={() => setPage((value) => Math.max(1, value - 1))}
-                className="rounded-lg border px-4 py-2 text-sm font-semibold disabled:opacity-40"
-              >
-                Previous
-              </button>
-              {Array.from({ length: pageCount }, (_, index) => index + 1).map(
-                (number) => (
-                  <button
-                    type="button"
-                    key={number}
-                    onClick={() => setPage(number)}
-                    className={`h-10 min-w-10 rounded-lg border px-3 text-sm font-semibold ${number === currentPage ? "border-forest-700 bg-forest-700 text-white" : "text-gray-700 hover:bg-forest-50"}`}
-                  >
-                    {number}
-                  </button>
-                ),
-              )}
-              <button
-                type="button"
-                disabled={currentPage === pageCount}
-                onClick={() =>
-                  setPage((value) => Math.min(pageCount, value + 1))
-                }
-                className="rounded-lg border px-4 py-2 text-sm font-semibold disabled:opacity-40"
-              >
-                Next
-              </button>
+          {matchingPosts.length > pageSize && (
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+              <p className="text-sm text-gray-500">
+                Page {currentPage} of {pageCount}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setPage((value) => Math.max(1, value - 1))}
+                  className="rounded-lg border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: pageCount }, (_, index) => index + 1).map(
+                  (number) => (
+                    <button
+                      type="button"
+                      key={number}
+                      onClick={() => setPage(number)}
+                      aria-current={number === currentPage ? "page" : undefined}
+                      className={`h-10 min-w-10 rounded-lg border px-3 text-sm font-semibold ${number === currentPage ? "border-forest-600 bg-forest-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                    >
+                      {number}
+                    </button>
+                  ),
+                )}
+                <button
+                  type="button"
+                  disabled={currentPage === pageCount}
+                  onClick={() =>
+                    setPage((value) => Math.min(pageCount, value + 1))
+                  }
+                  className="rounded-lg border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       <AdminConfirmModal
         open={Boolean(deleteTarget)}
         title="Delete article?"
-        description={`${deleteTarget?.title ?? 'This article'} and its uploaded cover image will be permanently removed from Firestore and ImageKit. This action cannot be undone.`}
-        confirmLabel={saving ? 'Deleting...' : 'Delete Article'}
+        description={`${deleteTarget?.title ?? "This article"} and its uploaded cover image will be permanently removed from Firestore and ImageKit. This action cannot be undone.`}
+        confirmLabel={saving ? "Deleting..." : "Delete Article"}
         tone="danger"
         onConfirm={confirmDeletePost}
         onCancel={() => setDeleteTarget(null)}
@@ -416,7 +444,7 @@ export default function BlogAdminPage() {
         open={confirmSave}
         title="Save changes?"
         description="This will publish the updated article and keep the current cover image in sync with Firestore and ImageKit."
-        confirmLabel={saving ? 'Saving...' : 'Save article'}
+        confirmLabel={saving ? "Saving..." : "Save article"}
         tone="success"
         onConfirm={handleConfirmSave}
         onCancel={() => setConfirmSave(false)}

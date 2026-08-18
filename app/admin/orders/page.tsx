@@ -745,11 +745,11 @@ export default function OrdersPage() {
               )}
             </div>
             {matching.length > 0 && (
-              <div className="mt-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
                 <p className="text-sm text-gray-500">
                   Page {currentPage} of {pageCount}
                 </p>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex gap-2">
                   <button
                     type="button"
                     disabled={currentPage === 1}
@@ -766,7 +766,8 @@ export default function OrdersPage() {
                       key={number}
                       type="button"
                       onClick={() => setPage(number)}
-                      className={`h-10 min-w-10 rounded-lg border px-3 text-sm font-semibold ${number === currentPage ? "border-forest-700 bg-forest-700 text-white" : "text-gray-700 hover:bg-forest-50"}`}
+                      aria-current={number === currentPage ? "page" : undefined}
+                      className={`h-10 min-w-10 rounded-lg border px-3 text-sm font-semibold ${number === currentPage ? "border-forest-600 bg-forest-600 text-white" : "text-gray-700 hover:bg-gray-50"}`}
                     >
                       {number}
                     </button>

@@ -173,10 +173,10 @@ export default function Header() {
           <div className="flex items-center justify-end gap-1.5 sm:gap-3 lg:gap-6">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all sm:h-auto sm:w-auto sm:rounded-none sm:border-0 ${
+              className={`hidden transition-all lg:flex ${
                 isScrolled || !isHome || isMenuOpen
-                  ? "border-[#d8d1c4] text-gray-700 hover:border-[#b38a3c] hover:text-forest-600"
-                  : "border-white/30 text-white hover:border-gold-300 hover:text-gold-300"
+                  ? "text-gray-700 hover:text-forest-600"
+                  : "text-white hover:text-gold-300"
               }`}
               aria-label="Search"
             >
@@ -212,7 +212,7 @@ export default function Header() {
                       {user.email}
                     </p>
                     <Link
-                      href="/profile"
+                      href={isAdmin ? "/admin/settings" : "/profile"}
                       onClick={() => setIsAccountOpen(false)}
                       className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-forest-50"
                     >
@@ -269,10 +269,10 @@ export default function Header() {
             </Link>
             <button
               onClick={() => setIsCartOpen(true)}
-              className={`relative flex h-10 w-10 items-center justify-center rounded-full border transition-all sm:h-auto sm:w-auto sm:rounded-none sm:border-0 ${
+              className={`relative hidden transition-all lg:flex ${
                 isScrolled || !isHome || isMenuOpen
-                  ? "border-[#d8d1c4] text-gray-700 hover:border-[#b38a3c] hover:text-forest-600"
-                  : "border-white/30 text-white hover:border-gold-300 hover:text-gold-300"
+                  ? "text-gray-700 hover:text-forest-600"
+                  : "text-white hover:text-gold-300"
               }`}
               aria-label="Cart"
             >
@@ -314,9 +314,39 @@ export default function Header() {
                 ))}
               </div>
 
-              <div className="mt-6 grid grid-cols-2 gap-2.5 sm:hidden">
+              <div className="mt-6 grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsSearchOpen(true);
+                  }}
+                  className="flex items-center gap-2.5 border border-white/10 bg-white/[0.03] px-3.5 py-3 text-left text-xs hover:border-[#c9a24f]/50"
+                >
+                  <Search size={18} className="text-[#c9a24f]" /> Search
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsCartOpen(true);
+                  }}
+                  className="flex items-center gap-2.5 border border-white/10 bg-white/[0.03] px-3.5 py-3 text-left text-xs hover:border-[#c9a24f]/50"
+                >
+                  <ShoppingCart size={18} className="text-[#c9a24f]" /> Cart
+                  {getCartCount() > 0 && (
+                    <span className="ml-auto text-xs text-[#dcb45f]">
+                      {getCartCount()}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              <div className="mt-2.5 grid grid-cols-2 gap-2.5 sm:hidden">
                 <Link
-                  href={user ? "/profile" : "/login"}
+                  href={
+                    user ? (isAdmin ? "/admin/settings" : "/profile") : "/login"
+                  }
                   onClick={() => setIsMenuOpen(false)}
                   className="flex items-center gap-2.5 border border-white/10 bg-white/[0.03] px-3.5 py-3 text-xs hover:border-[#c9a24f]/50"
                 >

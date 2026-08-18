@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   addDoc,
   collection,
@@ -16,6 +17,7 @@ import { upload } from "@imagekit/next";
 import {
   AlertTriangle,
   Check,
+  Eye,
   Pencil,
   Plus,
   Search,
@@ -102,6 +104,8 @@ const parseList = (value: string) =>
     .filter(Boolean);
 
 export default function ProductAdminPage() {
+  const pathname = usePathname();
+  const isNewArrivalsPage = pathname === "/admin/new-arrivals";
   const { user, loading } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingRole, setCheckingRole] = useState(true);
@@ -119,6 +123,9 @@ export default function ProductAdminPage() {
   const [uploadingArrivalDocId, setUploadingArrivalDocId] = useState<
     string | null
   >(null);
+  const [arrivalPreview, setArrivalPreview] = useState<ProductRecord | null>(
+    null,
+  );
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [arrivalFilter, setArrivalFilter] = useState("ALL");
@@ -651,17 +658,19 @@ export default function ProductAdminPage() {
               Administration
             </p>
             <h1 className="font-serif text-3xl text-forest-800">
-              Product Management
+              {isNewArrivalsPage ? "New Arrivals" : "Product Management"}
             </h1>
             <p className="text-gray-500">
-              {products.length} products in Firestore
+              {isNewArrivalsPage
+                ? `${products.filter((product) => product.isNew).length} products selected for the homepage`
+                : `${products.length} products in Firestore`}
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={openAddProduct}
-              className="flex items-center gap-2 rounded-lg bg-forest-600 px-5 py-3 font-semibold text-white"
+              className={`items-center gap-2 rounded-lg bg-forest-600 px-5 py-3 font-semibold text-white ${isNewArrivalsPage ? "hidden" : "flex"}`}
             >
               <Plus size={18} />
               Add Product
@@ -1128,7 +1137,52 @@ export default function ProductAdminPage() {
           </div>
         )}
 
-        <div className="grid gap-8">
+        {arrivalPreview && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="arrival-preview-title"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setArrivalPreview(null);
+            }}
+          >
+            <div className="w-fit max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b px-5 py-4">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[.2em] text-gold-600">
+                    New Arrivals Preview
+                  </p>
+                  <h2
+                    id="arrival-preview-title"
+                    className="font-serif text-xl text-forest-900"
+                  >
+                    {arrivalPreview.name}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setArrivalPreview(null)}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border text-gray-500 transition hover:bg-gray-50 hover:text-gray-900"
+                  aria-label="Close image preview"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <img
+                src={
+                  arrivalPreview.newArrivalImage ||
+                  Object.values(arrivalPreview.images)[0] ||
+                  ""
+                }
+                alt={`${arrivalPreview.name} New Arrivals preview`}
+                className="block h-auto max-h-[75vh] w-auto max-w-full bg-[#f1eee7] object-contain"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className={isNewArrivalsPage ? "hidden" : "grid gap-8"}>
           <div className="rounded-2xl border bg-white p-6">
             <div className="mb-4 flex items-end justify-between">
               <h2 className="font-serif text-xl text-forest-800">
@@ -1289,23 +1343,25 @@ export default function ProductAdminPage() {
           </div>
         </div>
 
-        <section className="mt-8 rounded-xl bg-white p-6 shadow">
+        <section
+          className={`${isNewArrivalsPage ? "rounded-3xl" : "hidden"} border border-[#ded8cc] bg-[#fffdf9] p-4 shadow-[0_16px_40px_rgba(26,39,30,.08)] sm:p-6`}
+        >
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="font-serif text-2xl text-forest-800">
-                New Arrivals Editor
+                Homepage Collection
               </h2>
               <p className="text-sm text-gray-500">
                 Choose homepage products and set their display order. Hiding one
                 here keeps it available in the shop.
               </p>
             </div>
-            <span className="rounded-full bg-gold-100 px-3 py-1 text-sm font-semibold text-gold-700">
+            <span className="rounded-full border border-gold-200 bg-gold-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gold-700">
               {products.filter((product) => product.isNew).length} selected
             </span>
           </div>
-          <div className="mb-5 space-y-3">
-            <div className="relative">
+          <div className="mb-6 grid gap-3 rounded-2xl border border-[#e4ded3] bg-white p-3 lg:grid-cols-[minmax(260px,1.5fr)_minmax(180px,.75fr)_minmax(180px,.75fr)]">
+            <div className="relative lg:self-start">
               <Search
                 size={17}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -1320,49 +1376,47 @@ export default function ProductAdminPage() {
                 className="w-full rounded-lg border py-2.5 pl-10 pr-3 text-sm"
               />
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <AdminSelect
-                value={newArrivalCategory}
-                onChange={(value) => {
-                  setNewArrivalCategory(value);
-                  setNewArrivalPage(1);
-                }}
-                ariaLabel="Filter New Arrivals by category"
-                options={[
-                  { value: "ALL", label: "All categories" },
-                  ...categories.map((category) => ({
-                    value: category,
-                    label: category,
-                  })),
-                ]}
-              />
-              <AdminSelect
-                value={newArrivalStatus}
-                onChange={(value) => {
-                  setNewArrivalStatus(value);
-                  setNewArrivalPage(1);
-                }}
-                ariaLabel="Filter by New Arrivals visibility"
-                options={[
-                  { value: "ALL", label: "All products" },
-                  { value: "SHOWN", label: "Shown in New Arrivals" },
-                  { value: "HIDDEN", label: "Not in New Arrivals" },
-                ]}
-              />
-            </div>
-            <p className="text-xs text-gray-500">
+            <AdminSelect
+              value={newArrivalCategory}
+              onChange={(value) => {
+                setNewArrivalCategory(value);
+                setNewArrivalPage(1);
+              }}
+              ariaLabel="Filter New Arrivals by category"
+              options={[
+                { value: "ALL", label: "All categories" },
+                ...categories.map((category) => ({
+                  value: category,
+                  label: category,
+                })),
+              ]}
+            />
+            <AdminSelect
+              value={newArrivalStatus}
+              onChange={(value) => {
+                setNewArrivalStatus(value);
+                setNewArrivalPage(1);
+              }}
+              ariaLabel="Filter by New Arrivals visibility"
+              options={[
+                { value: "ALL", label: "All products" },
+                { value: "SHOWN", label: "Shown in New Arrivals" },
+                { value: "HIDDEN", label: "Not in New Arrivals" },
+              ]}
+            />
+            <p className="text-xs text-gray-500 lg:col-span-3">
               Showing {paginatedArrivalProducts.length} of{" "}
               {arrivalEditorProducts.length} matching products
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {paginatedArrivalProducts.map((product) => {
               const image = Object.values(product.images)[0];
               const displayImage = product.newArrivalImage || image;
               return (
                 <div
                   key={`arrival-${product.docId}`}
-                  className={`overflow-hidden rounded-lg border ${product.isNew ? "border-gold-300 bg-gold-50" : "border-gray-200 bg-white"}`}
+                  className={`overflow-hidden rounded-2xl border shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg ${product.isNew ? "border-gold-300 bg-[#fffaf0]" : "border-gray-200 bg-white"}`}
                 >
                   <div
                     onDragOver={(e) => {
@@ -1377,7 +1431,7 @@ export default function ProductAdminPage() {
                           e.dataTransfer.files?.[0],
                         );
                     }}
-                    className="group relative aspect-[2/1] min-h-40 bg-gray-100 bg-cover bg-center"
+                    className="group relative aspect-[16/10] min-h-40 bg-gray-100 bg-cover bg-center"
                     style={
                       displayImage
                         ? {
@@ -1414,7 +1468,7 @@ export default function ProductAdminPage() {
                       Drop image here
                     </span>
                   </div>
-                  <div className="p-3">
+                  <div className="p-4">
                     <div className="flex items-center gap-3">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-gray-800">
@@ -1442,24 +1496,35 @@ export default function ProductAdminPage() {
                         />
                       </label>
                     </div>
-                    <button
-                      type="button"
-                      disabled={saving}
-                      onClick={() => updateNewArrival(product, !product.isNew)}
-                      className={`mt-3 flex w-full items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50 ${product.isNew ? "border-red-200 text-red-600 hover:bg-red-50" : "border-forest-300 text-forest-700 hover:bg-forest-50"}`}
-                    >
-                      {product.isNew ? (
-                        <>
-                          <X size={16} />
-                          Hide from New Arrivals
-                        </>
-                      ) : (
-                        <>
-                          <Plus size={16} />
-                          Add to New Arrivals
-                        </>
-                      )}
-                    </button>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setArrivalPreview(product)}
+                        className="flex items-center justify-center gap-2 rounded-lg border border-gold-200 bg-white px-3 py-2 text-sm font-semibold text-gold-700 transition hover:bg-gold-50"
+                      >
+                        <Eye size={16} /> Preview
+                      </button>
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() =>
+                          updateNewArrival(product, !product.isNew)
+                        }
+                        className={`flex items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-sm font-semibold disabled:opacity-50 ${product.isNew ? "border-red-200 text-red-600 hover:bg-red-50" : "border-forest-300 text-forest-700 hover:bg-forest-50"}`}
+                      >
+                        {product.isNew ? (
+                          <>
+                            <X size={16} />
+                            <span className="hidden sm:inline">Hide</span>
+                            <span className="sm:hidden">Remove</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus size={16} /> Add
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
