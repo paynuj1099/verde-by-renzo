@@ -20,6 +20,9 @@ type AccountOrder = {
   createdAt?: Timestamp
   items?: CartItem[]
   customer?: { name?: string; email?: string; phone?: string; address?: string }
+  trackingNumber?: string
+  carrier?: string
+  trackingNote?: string
 }
 
 export default function ProfilePage() {
@@ -66,7 +69,7 @@ export default function ProfilePage() {
               <section className="mt-6 rounded-xl border border-gold-200 bg-gold-50 p-5">
                 <div className="mb-4"><h2 className="font-serif text-xl text-forest-800">Admin Dashboard</h2><p className="text-sm text-gray-600">Manage the Firestore catalog and review the public storefront.</p></div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Link href="/admin/products" className="flex items-center justify-center gap-2 rounded-lg bg-forest-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-forest-700"><PackagePlus size={18} />Manage Products</Link>
+                  <Link href="/admin" className="flex items-center justify-center gap-2 rounded-lg bg-forest-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-forest-700"><PackagePlus size={18} />Open Admin Dashboard</Link>
                   <Link href="/shop" className="flex items-center justify-center gap-2 rounded-lg border border-forest-600 px-4 py-3 font-semibold text-forest-700 transition-colors hover:bg-white"><Store size={18} />View Storefront</Link>
                 </div>
               </section>
@@ -112,6 +115,13 @@ export default function ProfilePage() {
                             <div className="mt-4 space-y-2 border-t border-gray-200 pt-4 text-xs text-gray-600">
                               {order.customer.phone && <p className="flex items-center gap-2"><Phone size={14} />{order.customer.phone}</p>}
                               {order.customer.address && <p className="flex items-start gap-2"><MapPin size={14} className="mt-0.5 flex-shrink-0" />{order.customer.address}</p>}
+                            </div>
+                          )}
+                          {(order.trackingNumber || order.trackingNote) && (
+                            <div className="mt-4 rounded-lg border border-forest-100 bg-white p-4 text-sm">
+                              <p className="mb-1 font-semibold text-forest-800">Shipment tracking</p>
+                              {order.trackingNumber && <p><span className="text-gray-500">{order.carrier || 'Carrier'}:</span> <span className="font-medium">{order.trackingNumber}</span></p>}
+                              {order.trackingNote && <p className="mt-2 text-xs text-gray-600">{order.trackingNote}</p>}
                             </div>
                           )}
                         </div>

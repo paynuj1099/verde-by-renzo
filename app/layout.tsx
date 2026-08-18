@@ -2,15 +2,14 @@ import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, Montserrat } from 'next/font/google'
 import './globals.css'
 
-import Header from '@/components/Header'
-import Footer from '@/components/Footer'
-import Chatbot from '@/components/Chatbot'
 import InitialLoader from '@/components/InitialLoader'
+import SiteChrome from '@/components/SiteChrome'
 import { CartProvider } from '@/context/CartContext'
 import { WishlistProvider } from '@/context/WishlistContext'
 import { AuthProvider } from '@/context/AuthContext'
 import { ProductProvider } from '@/context/ProductContext'
 import { SiteAssetsProvider } from '@/context/SiteAssetsContext'
+import { BlogProvider } from '@/context/BlogContext'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -49,16 +48,15 @@ export default function RootLayout({
         <AuthProvider>
           <SiteAssetsProvider>
             <ProductProvider>
+            <BlogProvider>
             <WishlistProvider>
               <CartProvider>
                 <InitialLoader>
-                  <Header />
-                  {children}
-                  <Footer />
-                  <Chatbot />
+                  <SiteChrome>{children}</SiteChrome>
                 </InitialLoader>
               </CartProvider>
             </WishlistProvider>
+            </BlogProvider>
             </ProductProvider>
           </SiteAssetsProvider>
         </AuthProvider>

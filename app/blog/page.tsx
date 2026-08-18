@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import Image from 'next/image'
 import SiteAssetImage from '@/components/SiteAssetImage'
 
 import {
@@ -9,15 +12,14 @@ import {
   ShoppingBag,
 } from 'lucide-react'
 
-import {
-  getAllBlogPosts,
-} from '@/lib/blog'
+import { useBlogs } from '@/context/BlogContext'
 
 import BlogNewsletter from '@/components/BlogNewsletter'
 
 export default function BlogPage() {
-  const blogPosts =
-    getAllBlogPosts()
+  const { posts: blogPosts, loading } = useBlogs()
+
+  if (loading) return <main className="min-h-screen bg-white pt-36"><p className="container text-center text-gray-500">Loading journal...</p></main>
 
   /*
    * ============================
@@ -156,16 +158,7 @@ export default function BlogPage() {
             {/* IMAGE */}
             <div className="relative aspect-[4/3] overflow-hidden bg-gray-100 lg:aspect-auto lg:min-h-[520px]">
 
-              <SiteAssetImage
-                assetId={featuredPost.imageAssetId}
-                alt={
-                  featuredPost.title
-                }
-                fill
-                priority
-                className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
+              {featuredPost.imageUrl ? <Image src={featuredPost.imageUrl} alt={featuredPost.title} fill priority className="object-cover object-center transition-transform duration-700 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 50vw" /> : <SiteAssetImage assetId={featuredPost.imageAssetId || 'blog-placeholder'} alt={featuredPost.title} fill priority className="object-cover object-center transition-transform duration-700 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 50vw" />}
 
             </div>
 
@@ -298,15 +291,7 @@ export default function BlogPage() {
                     {/* IMAGE */}
                     <div className="relative mb-5 aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
 
-                      <SiteAssetImage
-                        assetId={post.imageAssetId}
-                        alt={
-                          post.title
-                        }
-                        fill
-                        className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
+                      {post.imageUrl ? <Image src={post.imageUrl} alt={post.title} fill className="object-cover object-center transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" /> : <SiteAssetImage assetId={post.imageAssetId || 'blog-placeholder'} alt={post.title} fill className="object-cover object-center transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />}
 
                       {/* CATEGORY */}
                       <span className="absolute top-4 left-4 rounded-full bg-white/95 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-forest-700 shadow-sm backdrop-blur-sm">

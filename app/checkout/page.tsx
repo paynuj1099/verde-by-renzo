@@ -30,7 +30,7 @@ import {
   ShoppingBag,
   X,
 } from 'lucide-react'
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
+import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { firestore } from '@/lib/firebase'
 
@@ -92,6 +92,7 @@ export default function CheckoutPage() {
     orderSuccess,
     setOrderSuccess,
   ] = useState(false)
+  const [guestReference, setGuestReference] = useState('')
 
   /*
    * ============================
@@ -363,6 +364,18 @@ export default function CheckoutPage() {
             status: 'pre-order',
             createdAt: serverTimestamp(),
           })
+        } else {
+          const reference = `VBR-${Date.now().toString(36).toUpperCase()}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`
+          await setDoc(doc(firestore, 'guestOrders', reference), {
+            reference,
+            customer: formData,
+            items: cart,
+            totalItems: getCartCount(),
+            totalAmount: getCartTotal(),
+            status: 'pre-order',
+            createdAt: serverTimestamp(),
+          })
+          setGuestReference(reference)
         }
 
         /*
@@ -425,6 +438,8 @@ export default function CheckoutPage() {
             <p className="mx-auto mb-6 max-w-lg text-gray-600">
               Thank you for your pre-order. We&apos;ve received your order details and will contact you with payment and confirmation information.
             </p>
+
+            {guestReference && <div className="mx-auto mb-6 max-w-md rounded-xl border border-gold-200 bg-gold-50 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-gold-700">Guest order reference</p><p className="mt-1 break-all font-mono text-lg font-bold text-forest-800">{guestReference}</p><p className="mt-2 text-xs text-gray-600">Save this reference. You will need it to check your order status.</p><Link href={`/track-order?reference=${encodeURIComponent(guestReference)}`} className="mt-3 inline-block text-sm font-semibold text-forest-700 underline">Track this order</Link></div>}
 
             <Link
               href="/shop"

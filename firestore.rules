@@ -16,6 +16,22 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /blogs/{blogId} {
+      allow read: if resource.data.published == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /guestOrders/{reference} {
+      allow create: if request.resource.data.status == 'pre-order' &&
+        request.resource.data.reference == reference &&
+        request.resource.data.keys().hasOnly([
+          'reference', 'customer', 'items', 'totalItems', 'totalAmount', 'status', 'createdAt'
+        ]);
+      allow get: if true;
+      allow list, update: if isAdmin();
+      allow delete: if false;
+    }
+
     match /users/{userId} {
       allow create: if request.auth != null && request.auth.uid == userId &&
         !request.resource.data.keys().hasAny(['role']);
@@ -29,6 +45,16 @@ service cloud.firestore {
       match /{document=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      match /orders/{orderId} {
+        allow read, create: if request.auth != null && request.auth.uid == userId;
+        allow update: if (request.auth != null && request.auth.uid == userId) || isAdmin();
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    match /{path=**}/orders/{orderId} {
+      allow read, update: if isAdmin();
     }
   }
 }

@@ -5,11 +5,13 @@ import Link from 'next/link'
 import { addDoc, collection, deleteDoc, doc, getDocs, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { getIdTokenResult } from 'firebase/auth'
 import { upload } from '@imagekit/next'
-import { Eye, Pencil, Plus, Search, Trash2, Upload, X } from 'lucide-react'
+import { Pencil, Plus, Search, Trash2, Upload, X } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { firestore } from '@/lib/firebase'
 import type { Product } from '@/data/products'
 import { getColorClass, getColorDisplay, getColorStyle } from '@/lib/productUtils'
+import AdminRowActions from '@/components/AdminRowActions'
+import AdminPageSkeleton from '@/components/AdminPageSkeleton'
 
 type ProductRecord = Product & { docId: string; active?: boolean; newArrivalOrder?: number }
 type ProductForm = {
@@ -373,14 +375,14 @@ export default function ProductAdminPage() {
   const currentNewArrivalPage = Math.min(newArrivalPage, newArrivalPageCount)
   const paginatedArrivalProducts = arrivalEditorProducts.slice((currentNewArrivalPage - 1) * newArrivalPageSize, currentNewArrivalPage * newArrivalPageSize)
 
-  if (loading || checkingRole) return <main className="min-h-screen bg-gray-50 pt-32 text-center">Checking access...</main>
+  if (loading || checkingRole) return <AdminPageSkeleton variant="catalog" />
   if (!user) return <main className="min-h-screen bg-gray-50 pt-32 text-center"><p className="mb-4">Sign in to access product management.</p><Link href="/login" className="font-semibold text-forest-600">Go to login</Link></main>
   if (!isAdmin) return <main className="min-h-screen bg-gray-50 pt-32 text-center"><h1 className="font-serif text-2xl text-forest-800">Administrator access required</h1><p className="mx-auto mt-3 max-w-lg text-gray-600">Sign out and sign in again to refresh this account’s administrator access.</p></main>
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-16 pt-32">
-      <div className="container mx-auto max-w-5xl px-4">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+    <main className="min-h-screen bg-[#f4f7f2] py-6 sm:py-8">
+      <div className="mx-auto w-full max-w-[1480px] px-5 lg:px-8">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div><h1 className="font-serif text-3xl text-forest-800">Product Management</h1><p className="text-gray-500">{products.length} products in Firestore</p></div>
           <div className="flex flex-wrap gap-3">
             <button type="button" onClick={openAddProduct} className="flex items-center gap-2 rounded-lg bg-forest-600 px-5 py-3 font-semibold text-white"><Plus size={18} />Add Product</button>
@@ -472,7 +474,10 @@ export default function ProductAdminPage() {
               <label className="flex items-center gap-3 text-sm font-medium text-gray-700"><input type="checkbox" checked={form.isPopular} onChange={(e) => setForm({ ...form, isPopular: e.target.checked })} className="h-4 w-4 rounded text-forest-600" />Mark as popular</label>
               <label className="flex items-center gap-3 text-sm font-medium text-gray-700"><input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} className="h-4 w-4 rounded text-forest-600" />Active and visible in Shop</label>
             </div>
-            <button disabled={saving} className="w-full rounded-lg bg-forest-600 py-3 font-semibold text-white disabled:bg-gray-400">{saving ? 'Saving...' : editingDocId ? 'Save Changes' : 'Add Product'}</button>
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={cancelEdit} disabled={saving} className="rounded-lg border px-5 py-3 font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+              <button disabled={saving} className="rounded-lg bg-forest-600 px-6 py-3 font-semibold text-white disabled:bg-gray-400">{saving ? 'Saving...' : editingDocId ? 'Save Changes' : 'Add Product'}</button>
+            </div>
           </form>
         </div>}
 
@@ -481,7 +486,7 @@ export default function ProductAdminPage() {
             <div className="mb-4 flex items-end justify-between"><h2 className="font-serif text-xl text-forest-800">Firestore Catalog</h2><span className="text-xs text-gray-500">{paginatedCatalogProducts.length} of {filteredProducts.length} shown</span></div>
             <div className="mb-4 space-y-3">
               <div className="relative"><Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" /><input value={search} onChange={(e) => { setSearch(e.target.value); setCatalogPage(1) }} placeholder="Search products..." className="w-full rounded-lg border py-2.5 pl-10 pr-3 text-sm" /></div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setCatalogPage(1) }} className="rounded-lg border p-2.5 text-sm"><option value="ALL">All categories</option>{categories.map((category) => <option key={category} value={category}>{category}</option>)}</select>
                 <select value={arrivalFilter} onChange={(e) => { setArrivalFilter(e.target.value); setCatalogPage(1) }} className="rounded-lg border p-2.5 text-sm"><option value="ALL">All products</option><option value="NEW">New arrivals</option><option value="STANDARD">Not new</option></select>
               </div>
@@ -489,10 +494,10 @@ export default function ProductAdminPage() {
             <div className="max-h-[560px] space-y-3 overflow-y-auto">
               {paginatedCatalogProducts.map((product) => {
                 const image = Object.values(product.images)[0]
-                return <div key={product.docId} className={`flex items-center gap-3 rounded-lg p-3 ${editingDocId === product.docId ? 'bg-forest-50 ring-1 ring-forest-300' : 'bg-gray-50'}`}>
-                  <div className="h-16 w-16 flex-shrink-0 rounded-md bg-gray-200 bg-cover bg-center" style={image ? { backgroundImage: `url("${image.replace(/"/g, '%22')}")` } : undefined} aria-label={image ? `${product.name} image` : 'No image'} />
+                return <div key={product.docId} className={`grid gap-3 rounded-lg p-3 sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:items-center ${editingDocId === product.docId ? 'bg-forest-50 ring-1 ring-forest-300' : 'bg-gray-50'}`}>
+                  <div className="h-44 w-full rounded-md bg-gray-200 bg-cover bg-center sm:h-16 sm:w-16" style={image ? { backgroundImage: `url("${image.replace(/"/g, '%22')}")` } : undefined} aria-label={image ? `${product.name} image` : 'No image'} />
                   <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate font-semibold text-gray-800">{product.name}</p>{product.isNew && <span className="rounded-full bg-gold-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-gold-700">New</span>}</div><p className="truncate text-xs text-gray-500">{product.category} · {product.colors.join(', ')}</p><p className="font-semibold text-forest-700">₱{product.price.toLocaleString('en-PH')}</p></div>
-                  <div className="flex flex-shrink-0 items-center gap-2"><Link href={`/shop/${product.id}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1 rounded-lg border border-gold-500 px-3 py-2 text-sm font-semibold text-gold-700 hover:bg-gold-50" aria-label={`Preview ${product.name} product details`}><Eye size={15} />Preview</Link><button type="button" onClick={() => editProduct(product)} className="flex items-center justify-center gap-1 rounded-lg border border-forest-600 px-3 py-2 text-sm font-semibold text-forest-600 hover:bg-forest-50"><Pencil size={15} />Edit</button><button type="button" disabled={saving} onClick={() => deleteProduct(product)} className="flex items-center justify-center gap-1 rounded-lg border border-red-300 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"><Trash2 size={15} />Delete</button></div>
+                  <AdminRowActions previewHref={`/shop/${product.id}`} itemName={`${product.name} product details`} onEdit={() => editProduct(product)} onDelete={() => deleteProduct(product)} disabled={saving} />
                 </div>
               })}
               {!filteredProducts.length && <p className="rounded-lg bg-gray-50 p-6 text-center text-sm text-gray-500">No products match these filters.</p>}

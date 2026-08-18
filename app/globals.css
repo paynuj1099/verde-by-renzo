@@ -54,3 +54,42 @@ img {
   user-select: none;
   -webkit-user-select: none;
 }
+/* Verde admin analytics surfaces */
+.admin-dashboard article {
+  border: 1px solid rgba(33, 79, 25, 0.12);
+  background-image: linear-gradient(145deg, #ffffff 25%, #f3f8f1 100%);
+}
+
+.admin-dashboard article:first-of-type {
+  background-image: none;
+}
+
+@media (max-width: 639px) {
+  .blog-admin-page .divide-y > div > div:first-child {
+    height: 11rem;
+  }
+}
+
+.blog-admin-page > div > .rounded-2xl.border.bg-white {
+  padding-bottom: 5.75rem;
+}
+
+.blog-admin-page > div > .rounded-2xl.border.bg-white + .mt-5 {
+  position: relative;
+  margin: -4.75rem 1.5rem 0;
+  border-width: 1px 0 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 1rem 0 0;
+  box-shadow: none;
+}
+
+@media (max-width: 639px) {
+  .blog-admin-page > div > .rounded-2xl.border.bg-white {
+    padding-bottom: 8.5rem;
+  }
+
+  .blog-admin-page > div > .rounded-2xl.border.bg-white + .mt-5 {
+    margin: -7.5rem 1rem 0;
+  }
+}

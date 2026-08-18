@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Menu, X, Search, User, Heart, ShoppingCart, LogOut } from 'lucide-react'
+import { getIdTokenResult } from 'firebase/auth'
+import { Menu, X, Search, User, Heart, ShoppingCart, LogOut, LayoutDashboard } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useWishlist } from '@/context/WishlistContext'
 import CartModal from './CartModal'
@@ -19,6 +20,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const pathname = usePathname()
   const { getCartCount } = useCart()
   const { getWishlistCount } = useWishlist()
@@ -31,6 +33,14 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false)
+      return
+    }
+    getIdTokenResult(user).then((token) => setIsAdmin(token.claims.admin === true)).catch(() => setIsAdmin(false))
+  }, [user])
 
   const handleLogout = async () => {
     await logout()
@@ -94,7 +104,7 @@ export default function Header() {
           </div>
 
           {/* Right Icons */}
-          <div className="flex items-center space-x-3 lg:space-x-6 justify-end">
+          <div className="flex items-center justify-end gap-3 lg:gap-6">
             <button 
               onClick={() => setIsSearchOpen(true)}
               className={`hidden sm:block transition-colors ${
@@ -103,7 +113,7 @@ export default function Header() {
               <Search size={20} />
             </button>
             {user ? (
-              <div className="relative hidden sm:block">
+              <div className="relative order-last hidden sm:block">
                 <button
                   onClick={() => setIsAccountOpen(!isAccountOpen)}
                   className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-forest-600 text-xs font-semibold text-white ring-2 ring-white/70"
@@ -117,7 +127,8 @@ export default function Header() {
                   <div className="absolute right-0 mt-3 w-64 rounded-xl border border-gray-100 bg-white p-3 text-gray-700 shadow-xl">
                     <p className="truncate font-semibold text-forest-800">{user.displayName || 'Verde customer'}</p>
                     <p className="mb-3 truncate text-xs text-gray-500">{user.email}</p>
-                    <Link href="/profile" onClick={() => setIsAccountOpen(false)} className="block rounded-lg px-3 py-2 text-sm hover:bg-forest-50">My Profile</Link>
+                    <Link href="/profile" onClick={() => setIsAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-forest-50"><User size={16} />My Profile</Link>
+                    {isAdmin && <Link href="/admin" onClick={() => setIsAccountOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-forest-700 hover:bg-forest-50"><LayoutDashboard size={16} />Dashboard</Link>}
                     <button onClick={handleLogout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50">
                       <LogOut size={16} /> Sign out
                     </button>
@@ -125,7 +136,7 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <Link href="/login" className={`hidden sm:block transition-colors ${
+              <Link href="/login" className={`order-last hidden sm:block transition-colors ${
                 isScrolled || !isHome ? 'text-gray-700 hover:text-forest-600' : 'text-white hover:text-gold-300'
               }`} aria-label="Account">
                 <User size={20} />

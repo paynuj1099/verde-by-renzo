@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import SiteAssetImage from '@/components/SiteAssetImage'
 import ReactMarkdown from 'react-markdown'
 
@@ -9,14 +10,12 @@ import {
   Clock3,
 } from 'lucide-react'
 
-import type {
-  BlogPost,
-} from '@/lib/blog'
+import type { BlogPostRecord } from '@/context/BlogContext'
 
 import BlogNewsletter from '@/components/BlogNewsletter'
 
 interface BlogArticleProps {
-  post: BlogPost
+  post: BlogPostRecord
 }
 
 export default function BlogArticle({
@@ -85,14 +84,7 @@ export default function BlogArticle({
 
         <div className="relative mx-auto mb-14 aspect-[16/9] max-w-6xl overflow-hidden rounded-2xl bg-gray-100">
 
-          <SiteAssetImage
-            assetId={post.imageAssetId}
-            alt={post.title}
-            fill
-            priority
-            className="object-cover object-center"
-            sizes="(max-width: 1280px) 100vw, 1200px"
-          />
+          {post.imageUrl ? <Image src={post.imageUrl} alt={post.title} fill priority className="object-cover object-center" sizes="(max-width: 1280px) 100vw, 1200px" /> : <SiteAssetImage assetId={post.imageAssetId || 'blog-placeholder'} alt={post.title} fill priority className="object-cover object-center" sizes="(max-width: 1280px) 100vw, 1200px" />}
 
         </div>
 

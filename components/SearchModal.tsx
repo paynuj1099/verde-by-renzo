@@ -9,10 +9,8 @@ import {
 import Image from 'next/image'
 import Link from 'next/link'
 
-import {
-  products,
-  type Product,
-} from '@/data/products'
+import type { Product } from '@/data/products'
+import { useProducts } from '@/context/ProductContext'
 
 import {
   getProductImage,
@@ -30,57 +28,17 @@ interface SearchModalProps {
   onClose: () => void
 }
 
-/*
- * Popular products now come
- * automatically from products.ts.
- */
-const popularProducts =
-  products
-    .filter(
-      (product) =>
-        product.isPopular
-    )
-    .slice(
-      0,
-      4
-    )
-
-/*
- * Trending searches also derive
- * from actual product data.
- */
-const trendingSearches =
-  [
-    ...popularProducts.map(
-      (product) =>
-        product.name
-    ),
-
-    ...products
-      .filter(
-        (product) =>
-          product.isNew &&
-          !product.isPopular
-      )
-      .slice(
-        0,
-        2
-      )
-      .map(
-        (product) =>
-          product.name
-      ),
-
-    'Accessories',
-  ].slice(
-    0,
-    7
-  )
-
 export default function SearchModal({
   isOpen,
   onClose,
 }: SearchModalProps) {
+  const { products } = useProducts()
+  const popularProducts = products.filter((product) => product.isPopular).slice(0, 4)
+  const trendingSearches = [
+    ...popularProducts.map((product) => product.name),
+    ...products.filter((product) => product.isNew && !product.isPopular).slice(0, 2).map((product) => product.name),
+    'Accessories',
+  ].slice(0, 7)
   const [
     searchQuery,
     setSearchQuery,
@@ -197,6 +155,7 @@ export default function SearchModal({
     )
   }, [
     searchQuery,
+    products,
   ])
 
   if (!isOpen) {

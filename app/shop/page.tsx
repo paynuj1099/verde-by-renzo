@@ -36,6 +36,10 @@ const categories = [
     id: 'accessories',
     label: 'ACCESSORIES',
   },
+  {
+    id: 'popular',
+    label: 'POPULAR',
+  },
 ]
 
 export default function ShopPage() {
@@ -69,15 +73,11 @@ export default function ShopPage() {
     isInWishlist,
   } = useWishlist()
 
-  const filteredProducts =
-    activeCategory ===
-    'ALL'
-      ? products
-      : products.filter(
-          (product) =>
-            product.category ===
-            activeCategory
-        )
+  const filteredProducts = activeCategory === 'ALL'
+    ? products
+    : activeCategory === 'POPULAR'
+      ? products.filter((product) => product.isPopular)
+      : products.filter((product) => product.category === activeCategory)
 
   /*
    * ADD TO CART
@@ -406,6 +406,8 @@ export default function ShopPage() {
                         product.category
                       }
                     </div>
+
+                    {product.isPopular && <div className="absolute bottom-3 left-3 z-10 rounded-full bg-gold-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow">Popular</div>}
 
                     {/* ======================= */}
                     {/* WISHLIST */}
