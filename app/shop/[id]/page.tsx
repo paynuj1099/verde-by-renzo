@@ -827,10 +827,10 @@ export default function ProductDetailPage() {
               )}
             </p>
 
-            {/* Long Description */}
+            {/* short Description */}
             <p className="mb-8 leading-7 text-gray-600">
               {
-                product.longDescription
+                product.description
               }
             </p>
 
@@ -1228,7 +1228,7 @@ export default function ProductDetailPage() {
 
                     <p className="leading-7 text-gray-600">
                       {
-                        product.description
+                        product.longDescription
                       }
                     </p>
 

@@ -27,9 +27,9 @@ const items = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Products", href: "/admin/products", icon: Package },
   { label: "New Arrivals", href: "/admin/new-arrivals", icon: Sparkles },
-  { label: "Blogs", href: "/admin/blogs", icon: BookOpen },
+  { label: "Journals", href: "/admin/blogs", icon: BookOpen },
   { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
-  { label: "Customers", href: "#", icon: Users, dummy: true },
+  { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Reports", href: "#", icon: FileText, dummy: true },
 ];
 

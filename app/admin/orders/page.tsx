@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import {
   collection,
   collectionGroup,
@@ -92,6 +93,7 @@ const getCurrentMonthValue = () => {
 };
 
 export default function OrdersPage() {
+  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
   const { products } = useProducts();
   const [allowed, setAllowed] = useState<boolean | null>(null);
@@ -100,6 +102,32 @@ export default function OrdersPage() {
   const [month, setMonth] = useState(getCurrentMonthValue);
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    const statusParam = searchParams.get("status")?.trim().toLowerCase();
+    const monthParam = searchParams.get("month")?.trim();
+
+    if (statusParam && statuses.includes(statusParam as Status)) {
+      setStatusFilter(statusParam);
+    } else {
+      setStatusFilter("all");
+    }
+
+    if (monthParam === "all") {
+      setMonth("all");
+    } else if (monthParam && /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam)) {
+      setMonth(monthParam);
+    } else if (statusParam) {
+      // A dashboard status link without a month should show that status
+      // across all months instead of silently limiting it to the current month.
+      setMonth("all");
+    } else {
+      setMonth(getCurrentMonthValue());
+    }
+
+    setPage(1);
+    setSelectedOrderKeys([]);
+  }, [searchParams]);
   const [dragging, setDragging] = useState("");
   const [dragOver, setDragOver] = useState<Status | null>(null);
   const [details, setDetails] = useState<Order | null>(null);

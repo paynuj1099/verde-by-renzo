@@ -300,7 +300,7 @@ export default function BlogAdminPage() {
               Administration
             </p>
             <h1 className="font-serif text-3xl text-forest-900">
-              Blog Management
+              Journal Management
             </h1>
             <p className="text-gray-500">
               {posts.length} articles in Firestore
