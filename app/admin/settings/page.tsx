@@ -351,6 +351,8 @@ export default function AdminSettingsPage() {
     user,
     loading,
     connectedProviders,
+    authNotice,
+    clearAuthNotice,
     linkGoogleAccount,
     linkGithubAccount,
     linkPasswordAccount,
@@ -466,6 +468,13 @@ export default function AdminSettingsPage() {
       .then((token) => setAllowed(token.claims.admin === true))
       .catch(() => setAllowed(false));
   }, [loading, user]);
+
+  useEffect(() => {
+    if (!authNotice) return;
+
+    setMessage(authNotice.message);
+    clearAuthNotice();
+  }, [authNotice, clearAuthNotice]);
 
   useEffect(
     () => () => {

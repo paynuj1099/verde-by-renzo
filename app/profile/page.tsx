@@ -32,6 +32,7 @@ import {
 import { getIdTokenResult } from "firebase/auth";
 import { useAuth } from "@/context/AuthContext";
 import AdminConfirmModal from "@/components/AdminConfirmModal";
+import AdminToast from "@/components/AdminToast";
 import LogoutButton from "@/components/LogoutButton";
 import { firestore } from "@/lib/firebase";
 import {
@@ -69,6 +70,8 @@ export default function ProfilePage() {
     user,
     loading,
     connectedProviders,
+    authNotice,
+    clearAuthNotice,
     linkGoogleAccount,
     linkGithubAccount,
     linkPasswordAccount,
@@ -94,6 +97,9 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [accountMessage, setAccountMessage] = useState("");
+  const [accountTone, setAccountTone] = useState<
+    "default" | "success" | "warning" | "error"
+  >("success");
   const [confirmUnlinkProvider, setConfirmUnlinkProvider] = useState<
     LinkedProviderId | null
   >(null);
@@ -267,6 +273,14 @@ export default function ProfilePage() {
     return () => window.clearTimeout(timeout);
   }, [accountMessage]);
 
+  useEffect(() => {
+    if (!authNotice) return;
+
+    setAccountMessage(authNotice.message);
+    setAccountTone(authNotice.tone);
+    clearAuthNotice();
+  }, [authNotice, clearAuthNotice]);
+
   /*
    * Check admin role.
    */
@@ -365,9 +379,11 @@ export default function ProfilePage() {
     setAccountAction("google");
     try {
       await linkGoogleAccount();
+      setAccountTone("success");
       setAccountMessage("Google account connected successfully.");
     } catch (error) {
       const code = (error as { code?: string }).code;
+      setAccountTone("error");
       setAccountMessage(
         code === "auth/credential-already-in-use"
           ? "Unable to connect Google. That Google account is already linked to another Verde account."
@@ -384,6 +400,7 @@ export default function ProfilePage() {
     setAccountAction("github");
     try {
       await linkGithubAccount();
+      setAccountTone("success");
       setAccountMessage("GitHub account connected successfully.");
     } catch (error) {
       const code = (error as { code?: string }).code;
@@ -401,6 +418,7 @@ export default function ProfilePage() {
 
   const disconnectProvider = (providerId: LinkedProviderId) => {
     if (connectedAccounts.length <= 1) {
+      setAccountTone("warning");
       setAccountMessage(
         "Your only sign-in method cannot be disconnected. Add another sign-in method first.",
       );
@@ -418,6 +436,7 @@ export default function ProfilePage() {
     setAccountAction("unlink");
     try {
       await unlinkProvider(providerId);
+      setAccountTone("success");
       setAccountMessage(
         providerId === "google.com"
           ? "Google account disconnected."
@@ -426,6 +445,7 @@ export default function ProfilePage() {
             : "Email & Password sign-in disconnected.",
       );
     } catch (error) {
+      setAccountTone("error");
       setAccountMessage(
         error instanceof Error
           ? error.message
@@ -453,6 +473,7 @@ export default function ProfilePage() {
 
   const connectPasswordAccount = async () => {
     if (!user?.email) {
+      setAccountTone("error");
       setAccountMessage(
         "This account does not have an email address available for password sign-in.",
       );
@@ -460,11 +481,13 @@ export default function ProfilePage() {
     }
 
     if (newPassword.length < 6) {
+      setAccountTone("warning");
       setAccountMessage("Password must be at least 6 characters.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
+      setAccountTone("warning");
       setAccountMessage("Passwords do not match.");
       return;
     }
@@ -476,10 +499,14 @@ export default function ProfilePage() {
       setShowPasswordModal(false);
       setNewPassword("");
       setConfirmPassword("");
+      setAccountTone("success");
       setAccountMessage("Email & Password connected successfully.");
     } catch (error) {
       const code = (error as { code?: string }).code;
 
+      setAccountTone(
+        code === "auth/requires-recent-login" ? "warning" : "error",
+      );
       setAccountMessage(
         code === "auth/email-already-in-use" ||
           code === "auth/credential-already-in-use"
@@ -513,6 +540,12 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-forest-50 to-white pb-16 pt-32">
+      <AdminToast
+        message={accountMessage}
+        onDismiss={() => setAccountMessage("")}
+        tone={accountTone}
+      />
+
       <AdminConfirmModal
         open={confirmUnlinkProvider !== null}
         title={`Disconnect ${
@@ -742,12 +775,6 @@ export default function ProfilePage() {
                   </p>
                 </div>
               </div>
-
-              {accountMessage && (
-                <p className="mb-3 rounded-lg border border-[#e8e2d6] bg-white px-3 py-2 text-xs text-gray-600">
-                  {accountMessage}
-                </p>
-              )}
 
               <div className="space-y-3">
                 <div className="flex flex-col items-stretch gap-3 rounded-xl border border-gray-100 bg-[#f5f3ed] p-3 sm:flex-row sm:items-center sm:p-4">

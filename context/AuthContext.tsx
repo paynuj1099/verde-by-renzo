@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import {
   AuthCredential,
   EmailAuthProvider,
@@ -31,6 +31,13 @@ import { firebaseAuth, firestore } from '@/lib/firebase'
 
 type LoginProvider = 'google' | 'github' | 'password'
 type ProviderId = 'google.com' | 'github.com' | 'password'
+type AuthNoticeTone = 'success' | 'warning' | 'error'
+
+type AuthNotice = {
+  id: number
+  message: string
+  tone: AuthNoticeTone
+}
 
 type AuthContextValue = {
   user: User | null
@@ -41,6 +48,8 @@ type AuthContextValue = {
   linkPendingGithubWithGoogle: () => Promise<boolean>
   clearPendingProviderLink: () => void
   connectedProviders: ProviderId[]
+  authNotice: AuthNotice | null
+  clearAuthNotice: () => void
   linkGoogleAccount: () => Promise<void>
   linkGithubAccount: () => Promise<void>
   linkPasswordAccount: (password: string) => Promise<void>
@@ -240,6 +249,22 @@ export function AuthProvider({
       : []
 
   const [connectedProviders, setConnectedProviders] = useState<ProviderId[]>([])
+  const [authNotice, setAuthNotice] = useState<AuthNotice | null>(null)
+
+  const clearAuthNotice = useCallback(() => {
+    setAuthNotice(null)
+  }, [])
+
+  const showAuthNotice = useCallback(
+    (message: string, tone: AuthNoticeTone = 'error') => {
+      setAuthNotice({
+        id: Date.now(),
+        message,
+        tone,
+      })
+    },
+    [],
+  )
 
   useEffect(() => {
     /*
@@ -254,6 +279,12 @@ export function AuthProvider({
           return
         }
 
+        const pendingLinkProvider =
+          window.sessionStorage.getItem('verde-link-provider') as
+            | 'google'
+            | 'github'
+            | null
+
         /*
          * A redirect result can come from either:
          * - signInWithRedirect()
@@ -265,6 +296,16 @@ export function AuthProvider({
         if (result.operationType === 'link') {
           setUser(result.user)
           setConnectedProviders(getConnectedProviders(result.user))
+
+          if (pendingLinkProvider) {
+            const providerLabel =
+              pendingLinkProvider === 'google' ? 'Google' : 'GitHub'
+
+            showAuthNotice(
+              `${providerLabel} account connected successfully.`,
+              'success',
+            )
+          }
 
           window.sessionStorage.removeItem('verde-link-provider')
 
@@ -294,7 +335,34 @@ export function AuthProvider({
           loginProvider,
         )
       })
-      .catch((error) => {
+      .catch((error: any) => {
+        const pendingLinkProvider =
+          window.sessionStorage.getItem('verde-link-provider') as
+            | 'google'
+            | 'github'
+            | null
+
+        if (pendingLinkProvider) {
+          const providerLabel =
+            pendingLinkProvider === 'google' ? 'Google' : 'GitHub'
+
+          if (
+            error?.code === 'auth/credential-already-in-use' ||
+            error?.code === 'auth/account-exists-with-different-credential' ||
+            error?.code === 'auth/email-already-in-use'
+          ) {
+            showAuthNotice(
+              `Unable to connect ${providerLabel}. That ${providerLabel} account is already linked to another Verde account.`,
+              'error',
+            )
+          } else if (error?.code !== 'auth/popup-closed-by-user') {
+            showAuthNotice(
+              `Unable to connect ${providerLabel} account. Please try again.`,
+              'error',
+            )
+          }
+        }
+
         window.sessionStorage.removeItem('verde-link-provider')
 
         console.error(
@@ -985,6 +1053,8 @@ export function AuthProvider({
         linkPendingGithubWithGoogle,
         clearPendingProviderLink,
         connectedProviders,
+        authNotice,
+        clearAuthNotice,
         linkGoogleAccount,
         linkGithubAccount,
         linkPasswordAccount,
