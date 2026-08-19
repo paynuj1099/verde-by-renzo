@@ -2,6 +2,9 @@
   "name": "verde-by-renzo",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +14,7 @@
   "dependencies": {
     "@imagekit/next": "^2.1.5",
     "firebase": "^12.17.1",
-    "firebase-admin": "^14.2.0",
+    "firebase-admin": "13.10.0",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.344.0",
     "next": "^14.2.0",
