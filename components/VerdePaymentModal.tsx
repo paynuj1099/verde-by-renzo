@@ -9,11 +9,9 @@ import {
   Download,
   ExternalLink,
   FlaskConical,
-  QrCode,
   RefreshCcw,
   ShieldCheck,
   Smartphone,
-  WalletCards,
   X,
   XCircle,
 } from "lucide-react";
@@ -54,6 +52,8 @@ type VerdePaymentModalProps = {
 };
 
 const BRAND_LOGO_PATH = "/images/verde-logo.png";
+const QRPH_LOGO_PATH = "/images/qrph-logo.png";
+const MAYA_LOGO_PATH = "/images/maya-logo.png";
 
 function formatPeso(value: number) {
   return value.toLocaleString("en-PH", {
@@ -321,10 +321,6 @@ export default function VerdePaymentModal({
       context.font = "700 30px monospace";
       context.fillText(orderReference || "—", 600, detailStartY + 330);
 
-      /*
-       * Keep the order notice completely inside the main payment
-       * card and reserve a separate footer area below the card.
-       */
       const noticeY = 1560;
 
       context.fillStyle = "#F1ECE1";
@@ -339,10 +335,6 @@ export default function VerdePaymentModal({
         noticeY + 56,
       );
 
-      /*
-       * Dedicated footer area — outside the rounded ivory card.
-       * This prevents the overlap visible in the previous download.
-       */
       const footerLineY = 1760;
 
       context.fillStyle = line;
@@ -392,25 +384,25 @@ export default function VerdePaymentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/65 px-3 py-4 backdrop-blur-sm sm:px-4 sm:py-6">
+    <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/65 p-0 backdrop-blur-sm sm:items-center sm:px-4 sm:py-6">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="verde-payment-title"
-        className="relative flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#d9d1c2] bg-[#f9f6ef] shadow-2xl lg:flex-row"
+        className="relative flex h-[96dvh] w-full max-w-5xl flex-col overflow-y-auto rounded-t-2xl border border-[#d9d1c2] bg-[#f9f6ef] shadow-2xl sm:h-auto sm:max-h-[94vh] sm:rounded-2xl lg:flex-row lg:overflow-hidden"
       >
         <button
           type="button"
           onClick={paymentStatus === "paid" && onPaymentDone ? onPaymentDone : onClose}
           disabled={isProcessing}
           aria-label="Close payment"
-          className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white/95 text-[#233128] shadow-sm transition-all hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50 sm:right-4 sm:top-4"
+          className="sticky right-3 top-3 z-30 ml-auto -mb-9 mr-3 mt-3 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-black/10 bg-white/95 text-[#233128] shadow-sm transition-all hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-50 sm:absolute sm:right-4 sm:top-4 sm:m-0"
         >
           <X size={18} />
         </button>
 
-        <div className="max-h-[42vh] overflow-y-auto bg-[#f4f0e7] p-4 sm:p-5 lg:max-h-[94vh] lg:w-[52%] lg:p-7">
-          <div className="mb-4 pr-10">
+        <div className="flex-none bg-[#f4f0e7] p-4 sm:p-5 lg:max-h-[94vh] lg:w-[52%] lg:overflow-y-auto lg:p-7">
+          <div className="mb-4 pr-10 pt-1 sm:pt-0">
             <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.28em] text-[#ad8437]">
               Verde by Renzo
             </p>
@@ -486,8 +478,12 @@ export default function VerdePaymentModal({
           <div className="mt-4 border-t border-[#d6cec0] pt-4">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">Total</p>
-                <p className="mt-1 text-[10px] leading-4 text-gray-400">Final amount verified before QR generation.</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                  Total
+                </p>
+                <p className="mt-1 text-[10px] leading-4 text-gray-400">
+                  Final amount verified before QR generation.
+                </p>
               </div>
 
               <p className="whitespace-nowrap font-serif text-xl font-semibold text-[#17251c] sm:text-2xl">
@@ -497,9 +493,11 @@ export default function VerdePaymentModal({
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white p-5 sm:p-7 lg:max-h-[94vh] lg:p-8">
+        <div className="flex min-h-0 flex-1 flex-col bg-white px-5 pb-10 pt-5 sm:p-7 lg:max-h-[94vh] lg:overflow-y-auto lg:p-8">
           <div className="pr-10">
-            <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] text-[#ad8437]">Secure payment</p>
+            <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] text-[#ad8437]">
+              Secure payment
+            </p>
 
             <h3 className="font-serif text-2xl text-[#17251c]">
               {paymentStatus === "paid"
@@ -529,18 +527,25 @@ export default function VerdePaymentModal({
                   <BadgeCheck size={30} />
                 </div>
 
-                <p className="mt-4 text-[9px] font-semibold uppercase tracking-[0.25em] text-green-700">Payment confirmed</p>
+                <p className="mt-4 text-[9px] font-semibold uppercase tracking-[0.25em] text-green-700">
+                  Payment confirmed
+                </p>
 
                 <h4 className="mt-2 font-serif text-2xl text-[#17251c]">Thank you</h4>
 
                 <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-gray-600">
-                  PayMongo confirmed the payment. Your Verde by Renzo order is now saved and ready for processing.
+                  PayMongo confirmed the payment. Your Verde by Renzo order is now saved and ready for
+                  processing.
                 </p>
 
                 {orderReference && (
                   <div className="mx-auto mt-4 max-w-sm rounded-lg bg-white/80 px-3 py-2.5">
-                    <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-gray-400">Order Reference</p>
-                    <p className="mt-1 break-all font-mono text-xs font-semibold text-[#25362a]">{orderReference}</p>
+                    <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-gray-400">
+                      Order Reference
+                    </p>
+                    <p className="mt-1 break-all font-mono text-xs font-semibold text-[#25362a]">
+                      {orderReference}
+                    </p>
                   </div>
                 )}
 
@@ -564,9 +569,7 @@ export default function VerdePaymentModal({
                   Payment unsuccessful
                 </p>
 
-                <h4 className="mt-2 font-serif text-2xl text-[#17251c]">
-                  Payment failed
-                </h4>
+                <h4 className="mt-2 font-serif text-2xl text-[#17251c]">Payment failed</h4>
 
                 <p className="mx-auto mt-2 max-w-sm text-xs leading-5 text-gray-600">
                   {paymentError ||
@@ -607,21 +610,29 @@ export default function VerdePaymentModal({
           ) : qrCodeImage ? (
             <div className="mt-5">
               <div className="rounded-2xl border border-[#d9d1c2] bg-[#fffdf8] p-4 text-center sm:p-5">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#ad8437]">QR Ph Payment</p>
+                <p className="text-[9px] font-semibold uppercase tracking-[0.25em] text-[#ad8437]">
+                  QR Ph Payment
+                </p>
 
                 <div className="relative mx-auto mt-4 flex w-fit items-center justify-center overflow-hidden rounded-xl border border-[#e5ded0] bg-white p-3 shadow-sm">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={qrCodeImage}
                     alt="PayMongo QR Ph payment code"
-                    className={`h-52 w-52 max-w-full object-contain transition-opacity sm:h-56 sm:w-56 ${isQrExpired ? "opacity-20" : ""}`}
+                    className={`h-48 w-48 max-w-full object-contain transition-opacity sm:h-56 sm:w-56 ${
+                      isQrExpired ? "opacity-20" : ""
+                    }`}
                   />
 
                   {isQrExpired && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/70 px-4 text-center backdrop-blur-[1px]">
                       <Clock3 size={24} className="text-red-600" />
-                      <p className="mt-2 text-sm font-bold uppercase tracking-[0.14em] text-red-700">QR expired</p>
-                      <p className="mt-1 max-w-[180px] text-[10px] leading-4 text-gray-600">Generate a new QR before completing payment.</p>
+                      <p className="mt-2 text-sm font-bold uppercase tracking-[0.14em] text-red-700">
+                        QR expired
+                      </p>
+                      <p className="mt-1 max-w-[180px] text-[10px] leading-4 text-gray-600">
+                        Generate a new QR before completing payment.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -637,7 +648,11 @@ export default function VerdePaymentModal({
                     }`}
                   >
                     <Clock3 size={14} />
-                    {isQrExpired ? <span>QR expired</span> : <span>Expires in {formatCountdown(remainingSeconds)}</span>}
+                    {isQrExpired ? (
+                      <span>QR expired</span>
+                    ) : (
+                      <span>Expires in {formatCountdown(remainingSeconds)}</span>
+                    )}
                   </div>
                 )}
 
@@ -670,7 +685,8 @@ export default function VerdePaymentModal({
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-amber-900">Localhost test payment</p>
                         <p className="mt-1 text-[10px] leading-4 text-amber-800">
-                          Do not scan this test QR with Maya or GCash. Use PayMongo&apos;s test page below to simulate success or failure.
+                          Do not scan this test QR with Maya or GCash. Use PayMongo&apos;s test page below
+                          to simulate success or failure.
                         </p>
                       </div>
                     </div>
@@ -687,20 +703,28 @@ export default function VerdePaymentModal({
                         Open PayMongo Test Payment
                       </button>
                     ) : (
-                      <p className="mt-2 text-[10px] text-amber-700">PayMongo did not return a test URL for this QR.</p>
+                      <p className="mt-2 text-[10px] text-amber-700">
+                        PayMongo did not return a test URL for this QR.
+                      </p>
                     )}
                   </div>
                 )}
 
                 <div className="mt-4">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-gray-400">Amount to pay</p>
-                  <p className="mt-1 font-serif text-3xl font-semibold text-[#173924]">₱{formatPeso(totalAmount)}</p>
+                  <p className="mt-1 font-serif text-3xl font-semibold text-[#173924]">
+                    ₱{formatPeso(totalAmount)}
+                  </p>
                 </div>
 
                 {orderReference && (
                   <div className="mt-4 rounded-lg bg-[#f4f0e7] px-3 py-2.5">
-                    <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-gray-400">Order Reference</p>
-                    <p className="mt-1 break-all font-mono text-xs font-semibold text-[#25362a]">{orderReference}</p>
+                    <p className="text-[8px] font-semibold uppercase tracking-[0.2em] text-gray-400">
+                      Order Reference
+                    </p>
+                    <p className="mt-1 break-all font-mono text-xs font-semibold text-[#25362a]">
+                      {orderReference}
+                    </p>
                   </div>
                 )}
 
@@ -719,7 +743,8 @@ export default function VerdePaymentModal({
                 <div className="mt-3 flex items-start gap-2 rounded-lg bg-white/70 px-3 py-2.5 text-left">
                   <Smartphone size={15} className="mt-0.5 flex-shrink-0 text-[#1d5a35]" />
                   <p className="text-[10px] leading-4 text-gray-500">
-                    Paying on this phone? Download the branded Verde QR card first, save it to Files or Photos, then open your payment app and import or scan the saved image.
+                    Paying on this phone? Download the branded Verde QR card first, save it to Files or
+                    Photos, then open your payment app and import or scan the saved image.
                   </p>
                 </div>
               </div>
@@ -743,13 +768,21 @@ export default function VerdePaymentModal({
                 onClick={onPayWithQrPh}
                 className="group flex w-full items-center gap-3 rounded-xl border border-[#cbb37a] bg-[#fffdf8] p-3.5 text-left transition-all hover:border-[#a98232] hover:bg-[#fbf7ed] hover:shadow-sm disabled:cursor-wait disabled:opacity-60"
               >
-                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#173924] text-white">
-                  <QrCode size={21} />
+                <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl">
+                  <Image
+                    src={QRPH_LOGO_PATH}
+                    alt="QR Ph"
+                    fill
+                    sizes="44px"
+                    className="object-contain"
+                  />
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-[#17251c]">QR Ph</p>
-                  <p className="mt-0.5 text-[11px] leading-4 text-gray-500">Maya, GCash, or supported banking apps.</p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-gray-500">
+                    Maya, GCash, or supported banking apps.
+                  </p>
                 </div>
 
                 <span className="text-[10px] font-semibold text-[#ad8437]">Recommended</span>
@@ -765,19 +798,21 @@ export default function VerdePaymentModal({
                     : "cursor-not-allowed border-gray-200 bg-gray-50 opacity-60"
                 }`}
               >
-                <div
-                  className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${
-                    mayaEnabled ? "bg-[#17251c] text-white" : "bg-gray-200 text-gray-500"
-                  }`}
-                >
-                  <WalletCards size={21} />
+                <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl">
+                  <Image
+                    src={MAYA_LOGO_PATH}
+                    alt="Maya"
+                    fill
+                    sizes="44px"
+                    className={`object-cover ${mayaEnabled ? "" : "opacity-50 grayscale"}`}
+                  />
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-[#17251c]">Maya</p>
                   <p className="mt-0.5 text-[11px] leading-4 text-gray-500">
                     {mayaEnabled
-                      ? "Continue securely using your Maya account."
+                      ? "Continue securely using Maya."
                       : "Direct Maya payments are not yet enabled."}
                   </p>
                 </div>
@@ -809,7 +844,7 @@ export default function VerdePaymentModal({
             </div>
           )}
 
-          <div className="mt-auto pt-5 text-center">
+          <div className="mt-auto pb-2 pt-8 text-center sm:pb-0 sm:pt-6">
             <div className="flex items-center justify-center gap-2 text-[10px] text-gray-400">
               <CreditCard size={13} />
               <span>Payments powered by PayMongo</span>
