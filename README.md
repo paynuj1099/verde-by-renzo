@@ -5,6 +5,9 @@ A modern, premium golf apparel and accessories e-commerce platform built with **
 VERDE by Renzo combines a luxury golf-inspired storefront with a full administration experience. Customers can browse product variants, manage a wishlist and cart, authenticate with Firebase, place orders through PayMongo-powered checkout flows, and view editorial content through the VERDE Journal. Administrators can manage products, new arrivals, orders, and user accounts from a protected dashboard.
 
 <img width="1869" height="947" alt="VERDE by Renzo storefront" src="https://github.com/user-attachments/assets/ac6ec9c6-913b-444d-9abe-e1a93c9e7b8c" />
+<img width="1906" height="939" alt="Screenshot 2026-08-20 153144" src="https://github.com/user-attachments/assets/6d15671f-282f-4001-a2b4-29c1f5255a43" />
+<img width="1890" height="942" alt="Screenshot 2026-08-20 153115" src="https://github.com/user-attachments/assets/5465f0b0-b121-4f1e-9e07-06d02a7296b2" />
+<img width="1890" height="940" alt="Screenshot 2026-08-20 153540" src="https://github.com/user-attachments/assets/120d2154-fafc-4107-a7ee-a5bb0fbc4f42" />
 
 ---
 
