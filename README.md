@@ -45,7 +45,7 @@ VERDE by Renzo combines a luxury golf-inspired storefront with a full administra
 - Email/password authentication
 - OAuth provider support through Firebase Authentication
 - Google sign-in support
-- GitHub sign-in support when configured
+- GitHub sign-in support
 - Password reset flow
 - User profile/account records stored in Firestore
 - Secure Firebase Admin SDK operations on the server
@@ -69,9 +69,11 @@ VERDE by Renzo combines a luxury golf-inspired storefront with a full administra
 - Product management
 - Create, edit, and remove product records
 - Product image and variant management
+- Journal Management (create, edit, and remove blogs)
 - New Arrivals management
 - Order management
 - Order status tracking/management
+- Coupon Management
 - Customer/account management
 - Firebase Authentication user management through server-side Admin SDK operations
 - Firestore user profile management
