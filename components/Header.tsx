@@ -12,6 +12,7 @@ import {
   User,
   Heart,
   ShoppingCart,
+  PackageSearch,
   LogOut,
   LayoutDashboard,
 } from "lucide-react";
@@ -182,6 +183,20 @@ export default function Header() {
             >
               <Search size={20} />
             </button>
+            {!user && (
+              <Link
+                href="/track-order"
+                className={`hidden sm:block transition-colors ${
+                  isScrolled || !isHome || isMenuOpen
+                    ? "text-gray-700 hover:text-forest-600"
+                    : "text-white hover:text-gold-300"
+                }`}
+                aria-label="Track Order"
+                title="Track Order"
+              >
+                <PackageSearch size={20} />
+              </Link>
+            )}
             {user ? (
               <div className="relative order-last hidden sm:block">
                 <button

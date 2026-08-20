@@ -29,6 +29,7 @@ const items = [
   { label: "New Arrivals", href: "/admin/new-arrivals", icon: Sparkles },
   { label: "Journals", href: "/admin/blogs", icon: BookOpen },
   { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
+  { label: "Coupons", href: "/admin/coupons", icon: Package },
   { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Reports", href: "#", icon: FileText, dummy: true },
 ];

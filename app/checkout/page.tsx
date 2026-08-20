@@ -2,6 +2,8 @@
 
 import {
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from 'react'
 
@@ -25,6 +27,7 @@ import {
 
 import {
   Check,
+  CreditCard,
   Package,
   Send,
   ShoppingBag,
@@ -33,6 +36,7 @@ import {
 import { addDoc, collection, doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import { useAuth } from '@/context/AuthContext'
 import { firestore } from '@/lib/firebase'
+import VerdePaymentModal from '@/components/VerdePaymentModal'
 
 const WEB3FORMS_ENDPOINT =
   'https://api.web3forms.com/submit'
@@ -40,12 +44,172 @@ const WEB3FORMS_ENDPOINT =
 const WEB3FORMS_ACCESS_KEY =
   process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY
 
+/*
+ * QR Ph expiry is explicitly set to 30 minutes so
+ * the on-screen countdown matches PayMongo exactly.
+ */
+const QR_PH_EXPIRY_SECONDS =
+  30 * 60
+
 type Web3FormsResponse = {
   success?: boolean
   message?: string
 }
 
+type PayMongoPaymentIntentResponse = {
+  paymentIntentId?: string
+  clientKey?: string
+  reference?: string
+  amount?: number
+  subtotalAmount?: number
+  discountAmount?: number
+  couponCode?: string | null
+  couponType?: 'percentage' | 'fixed' | null
+  couponValue?: number | null
+  totalAmount?: number
+  paymentMethods?: string[]
+  code?: string
+  displayedTotal?: number
+  serverTotal?: number
+  error?: string
+}
+
+type PayMongoPaymentMethodResponse = {
+  data?: {
+    id?: string
+  }
+  errors?: Array<{
+    detail?: string
+  }>
+}
+
+type PayMongoAttachResponse = {
+  data?: {
+    id?: string
+    attributes?: {
+      status?: string
+      next_action?: {
+        code?: {
+          image_url?: string
+        }
+      }
+    }
+  }
+  errors?: Array<{
+    detail?: string
+  }>
+}
+
+type PayMongoPaymentStatusResponse = {
+  paid?: boolean
+  failed?: boolean
+  status?: string
+  reference?: string
+  totalAmount?: number
+  paymentId?: string | null
+  failureCode?: string | null
+  failureMessage?: string | null
+  error?: string
+}
+
+type CouponValidationResponse = {
+  valid?: boolean
+  code?: string
+  couponDocPath?: string
+  type?: 'percentage' | 'fixed'
+  value?: number
+  minimumSpend?: number
+  maximumDiscount?: number | null
+  eligibleSubtotal?: number
+  subtotal?: number
+  discountAmount?: number
+  totalAmount?: number
+  error?: string
+}
+
+type AppliedCoupon = {
+  code: string
+  type: 'percentage' | 'fixed'
+  value: number
+  discountAmount: number
+  totalAmount: number
+}
+
+type PaymentUiStatus =
+  | 'idle'
+  | 'waiting'
+  | 'processing'
+  | 'failed'
+  | 'paid'
+
+/*
+ * PayMongo documents a test_url for QR Ph test-mode
+ * simulation, but its exact nesting can vary by response.
+ * Find it safely without depending on one fixed path.
+ */
+function findStringProperty(
+  value: unknown,
+  propertyName: string
+): string | null {
+  if (
+    !value ||
+    typeof value !== 'object'
+  ) {
+    return null
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found =
+        findStringProperty(
+          item,
+          propertyName
+        )
+
+      if (found) {
+        return found
+      }
+    }
+
+    return null
+  }
+
+  const record =
+    value as Record<
+      string,
+      unknown
+    >
+
+  const direct =
+    record[propertyName]
+
+  if (
+    typeof direct === 'string' &&
+    direct.trim()
+  ) {
+    return direct
+  }
+
+  for (
+    const child
+    of Object.values(record)
+  ) {
+    const found =
+      findStringProperty(
+        child,
+        propertyName
+      )
+
+    if (found) {
+      return found
+    }
+  }
+
+  return null
+}
+
 export default function CheckoutPage() {
+  const checkoutFormRef = useRef<HTMLFormElement>(null)
   const { user } = useAuth()
   const {
     cart,
@@ -69,6 +233,78 @@ export default function CheckoutPage() {
     setIsConfirmOpen,
   ] = useState(false)
 
+  const [
+    isPaymentModalOpen,
+    setIsPaymentModalOpen,
+  ] = useState(false)
+
+  const [
+    qrCodeImage,
+    setQrCodeImage,
+  ] = useState<string | null>(null)
+
+  const [
+    qrExpiresAt,
+    setQrExpiresAt,
+  ] = useState<number | null>(null)
+
+  const [
+    paymentReference,
+    setPaymentReference,
+  ] = useState('')
+
+  const [
+    paymentTotal,
+    setPaymentTotal,
+  ] = useState<number | null>(null)
+
+  const [
+    paymentIntentId,
+    setPaymentIntentId,
+  ] = useState('')
+
+  const [
+    testPaymentUrl,
+    setTestPaymentUrl,
+  ] = useState('')
+
+  const [
+    paymentStatus,
+    setPaymentStatus,
+  ] = useState<PaymentUiStatus>(
+    'idle'
+  )
+
+  const [
+    isLocalhost,
+    setIsLocalhost,
+  ] = useState(false)
+
+  const [
+    paymentError,
+    setPaymentError,
+  ] = useState('')
+
+  const [couponInput, setCouponInput] =
+    useState('')
+
+  const [appliedCoupon, setAppliedCoupon] =
+    useState<AppliedCoupon | null>(null)
+
+  const [couponError, setCouponError] =
+    useState('')
+
+  const [isApplyingCoupon, setIsApplyingCoupon] =
+    useState(false)
+
+  const [appliedCouponCartSignature, setAppliedCouponCartSignature] =
+    useState('')
+
+  const [
+    mayaEnabled,
+    setMayaEnabled,
+  ] = useState(false)
+
   useEffect(() => {
     if (!user) return
     setFormData((current) => ({
@@ -78,9 +314,25 @@ export default function CheckoutPage() {
     }))
   }, [user])
 
+  useEffect(() => {
+    const hostname =
+      window.location.hostname
+
+    setIsLocalhost(
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1'
+    )
+  }, [])
+
   const [
     isSending,
     setIsSending,
+  ] = useState(false)
+
+  const [
+    isCheckingOut,
+    setIsCheckingOut,
   ] = useState(false)
 
   const [
@@ -93,6 +345,234 @@ export default function CheckoutPage() {
     setOrderSuccess,
   ] = useState(false)
   const [guestReference, setGuestReference] = useState('')
+
+  const isPayMongoTestMode =
+    Boolean(
+      process.env
+        .NEXT_PUBLIC_PAYMONGO_PUBLIC_KEY
+        ?.startsWith(
+          'pk_test_'
+        )
+    )
+
+  const cartSignature = useMemo(
+    () =>
+      cart
+        .map((item) =>
+          [
+            item.id,
+            item.color,
+            item.size || '',
+            item.hand || '',
+            item.quantity,
+          ].join(':')
+        )
+        .join('|'),
+    [cart]
+  )
+
+  const checkoutSubtotal =
+    getCartTotal()
+
+  const payableTotal =
+    appliedCoupon?.totalAmount ??
+    checkoutSubtotal
+
+  useEffect(() => {
+    if (
+      appliedCoupon &&
+      appliedCouponCartSignature &&
+      appliedCouponCartSignature !== cartSignature
+    ) {
+      setAppliedCoupon(null)
+      setAppliedCouponCartSignature('')
+      setCouponError(
+        'Your cart changed. Re-apply the coupon to recalculate the discount.'
+      )
+    }
+  }, [
+    appliedCoupon,
+    appliedCouponCartSignature,
+    cartSignature,
+  ])
+
+  /*
+   * ============================
+   * PAYMENT STATUS POLLING
+   * ============================
+   *
+   * This makes localhost testing work without a public
+   * webhook endpoint. It also gives the modal fast
+   * feedback while the customer is paying.
+   *
+   * Production should still use a PayMongo webhook as
+   * the final source of truth; we will add that next.
+   */
+  useEffect(() => {
+    if (
+      !isPaymentModalOpen ||
+      !paymentIntentId ||
+      !paymentReference ||
+      paymentStatus === 'paid' ||
+      paymentStatus === 'failed'
+    ) {
+      return
+    }
+
+    let cancelled = false
+
+    const checkPaymentStatus =
+      async () => {
+        try {
+          const idToken =
+            user
+              ? await user.getIdToken()
+              : null
+
+          const response =
+            await fetch(
+              '/api/paymongo/payment-status',
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type':
+                    'application/json',
+                  ...(idToken
+                    ? {
+                        Authorization:
+                          `Bearer ${idToken}`,
+                      }
+                    : {}),
+                },
+                body:
+                  JSON.stringify({
+                    paymentIntentId,
+                    reference:
+                      paymentReference,
+                  }),
+              }
+            )
+
+          const result =
+            (await response
+              .json()
+              .catch(
+                () => null
+              )) as
+              | PayMongoPaymentStatusResponse
+              | null
+
+          if (
+            cancelled
+          ) {
+            return
+          }
+
+          if (
+            !response.ok
+          ) {
+            /*
+             * Avoid replacing the QR with a transient polling
+             * error. Keep the payment screen usable and log it.
+             */
+            console.warn(
+              'Unable to refresh PayMongo status:',
+              result?.error ||
+                response.status
+            )
+            return
+          }
+
+          if (
+            result?.paid === true ||
+            result?.status ===
+              'succeeded'
+          ) {
+            setPaymentStatus(
+              'paid'
+            )
+            setPaymentError(
+              ''
+            )
+
+            if (
+              typeof result.totalAmount ===
+              'number'
+            ) {
+              setPaymentTotal(
+                result.totalAmount
+              )
+            }
+
+            return
+          }
+
+          /*
+           * PayMongo does not expose a terminal "failed"
+           * Payment Intent status. A failed attempt normally
+           * returns to awaiting_payment_method together with
+           * last_payment_error. Our API converts that into
+           * failed: true so the modal can show a proper
+           * payment-failed screen.
+           */
+          if (
+            result?.failed === true
+          ) {
+            setPaymentStatus(
+              'failed'
+            )
+            setPaymentError(
+              result.failureMessage ||
+                'Your payment was not completed. Please try again.'
+            )
+            return
+          }
+
+          if (
+            result?.status ===
+              'processing'
+          ) {
+            setPaymentStatus(
+              'processing'
+            )
+          } else {
+            setPaymentStatus(
+              'waiting'
+            )
+          }
+        } catch (error) {
+          if (!cancelled) {
+            console.warn(
+              'Payment polling failed:',
+              error
+            )
+          }
+        }
+      }
+
+    void checkPaymentStatus()
+
+    const interval =
+      window.setInterval(
+        () => {
+          void checkPaymentStatus()
+        },
+        2500
+      )
+
+    return () => {
+      cancelled = true
+      window.clearInterval(
+        interval
+      )
+    }
+  }, [
+    isPaymentModalOpen,
+    paymentIntentId,
+    paymentReference,
+    paymentStatus,
+    user,
+  ])
 
   /*
    * ============================
@@ -415,6 +895,478 @@ export default function CheckoutPage() {
 
   /*
    * ============================
+   * APPLY COUPON
+   * ============================
+   * The UI asks the server to calculate the discount from
+   * live Firestore prices. The PayMongo route validates the
+   * coupon again before creating the actual Payment Intent.
+   */
+  const handleApplyCoupon = async () => {
+    const code = couponInput
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '')
+
+    if (!code) {
+      setCouponError('Enter a coupon code.')
+      return
+    }
+
+    if (cart.length === 0) {
+      setCouponError('Your cart is empty.')
+      return
+    }
+
+    if (!user) {
+      setCouponError(
+        'Sign in to use coupons. Each coupon can only be used once per account.'
+      )
+      return
+    }
+
+    setIsApplyingCoupon(true)
+    setCouponError('')
+
+    try {
+      const idToken =
+        await user.getIdToken()
+
+      const response = await fetch(
+        '/api/coupons/validate',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type':
+              'application/json',
+            Authorization:
+              `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            couponCode: code,
+            cart: cart.map((item) => ({
+              id: item.id,
+              quantity: item.quantity,
+            })),
+          }),
+        }
+      )
+
+      const result =
+        (await response
+          .json()
+          .catch(() => null)) as
+          | CouponValidationResponse
+          | null
+
+      if (
+        !response.ok ||
+        result?.valid !== true ||
+        !result.code ||
+        !result.type ||
+        typeof result.value !== 'number' ||
+        typeof result.discountAmount !== 'number' ||
+        typeof result.totalAmount !== 'number'
+      ) {
+        throw new Error(
+          result?.error ||
+            'Unable to apply this coupon.'
+        )
+      }
+
+      setAppliedCoupon({
+        code: result.code,
+        type: result.type,
+        value: result.value,
+        discountAmount:
+          result.discountAmount,
+        totalAmount:
+          result.totalAmount,
+      })
+      setAppliedCouponCartSignature(
+        cartSignature
+      )
+      setCouponInput(result.code)
+      setCouponError('')
+    } catch (error) {
+      setAppliedCoupon(null)
+      setAppliedCouponCartSignature('')
+      setCouponError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to apply this coupon.'
+      )
+    } finally {
+      setIsApplyingCoupon(false)
+    }
+  }
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null)
+    setAppliedCouponCartSignature('')
+    setCouponInput('')
+    setCouponError('')
+  }
+
+  /*
+   * ============================
+   * OPEN PAYMENT MODAL
+   * ============================
+   */
+  const handlePayMongoCheckout = () => {
+    if (
+      cart.length === 0 ||
+      isCheckingOut ||
+      isSending
+    ) {
+      return
+    }
+
+    if (
+      checkoutFormRef.current &&
+      !checkoutFormRef.current.reportValidity()
+    ) {
+      return
+    }
+
+    setSendError('')
+    setPaymentError('')
+    setQrCodeImage(null)
+    setQrExpiresAt(null)
+    setPaymentReference('')
+    setPaymentTotal(null)
+    setPaymentIntentId('')
+    setTestPaymentUrl('')
+    setPaymentStatus('idle')
+    setIsPaymentModalOpen(true)
+  }
+
+  /*
+   * ============================
+   * PAY WITH QR PH
+   * ============================
+   */
+  const handlePayWithQrPh = async () => {
+    if (
+      isCheckingOut ||
+      cart.length === 0
+    ) {
+      return
+    }
+
+    const publicKey =
+      process.env.NEXT_PUBLIC_PAYMONGO_PUBLIC_KEY
+
+    if (!publicKey) {
+      setPaymentError(
+        'PayMongo public key is not configured.'
+      )
+      return
+    }
+
+    setIsCheckingOut(true)
+    setPaymentError('')
+    setQrCodeImage(null)
+
+    try {
+      const idToken =
+        user
+          ? await user.getIdToken()
+          : null
+
+      const checkoutSubtotal =
+        getCartTotal()
+
+      const checkoutTotal =
+        appliedCoupon?.totalAmount ??
+        checkoutSubtotal
+
+      /*
+       * 1. Create the Payment Intent on our server.
+       * The server recalculates the total using
+       * Verde's product data.
+       */
+      const intentResponse =
+        await fetch(
+          '/api/paymongo/create-payment-intent',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type':
+                'application/json',
+              ...(idToken
+                ? {
+                    Authorization:
+                      `Bearer ${idToken}`,
+                  }
+                : {}),
+            },
+            body: JSON.stringify({
+              customer: formData,
+              cart: cart.map((item) => ({
+                id: item.id,
+                color: item.color,
+                size: item.size || null,
+                hand: item.hand || null,
+                quantity: item.quantity,
+              })),
+              couponCode:
+                appliedCoupon?.code ||
+                null,
+              expectedSubtotal:
+                checkoutSubtotal,
+              expectedTotal:
+                checkoutTotal,
+            }),
+          }
+        )
+
+      const intent =
+        (await intentResponse
+          .json()
+          .catch(() => null)) as
+          | PayMongoPaymentIntentResponse
+          | null
+
+      if (
+        !intentResponse.ok ||
+        !intent?.paymentIntentId ||
+        !intent?.clientKey
+      ) {
+        if (
+          intent?.code?.startsWith('COUPON_') ||
+          intent?.code === 'TOTAL_MISMATCH'
+        ) {
+          setAppliedCoupon(null)
+          setAppliedCouponCartSignature('')
+          setCouponError(
+            intent?.error ||
+              'Re-apply your coupon before paying.'
+          )
+        }
+
+        throw new Error(
+          intent?.error ||
+            'Unable to initialize payment.'
+        )
+      }
+
+      setPaymentIntentId(
+        intent.paymentIntentId
+      )
+
+      if (
+        typeof intent.totalAmount === 'number' &&
+        Math.abs(
+          intent.totalAmount - checkoutTotal
+        ) > 0.009
+      ) {
+        throw new Error(
+          'The payment total no longer matches your cart. Refresh the page and review the updated prices before generating a QR code.'
+        )
+      }
+
+      setPaymentTotal(
+        typeof intent.totalAmount === 'number'
+          ? intent.totalAmount
+          : checkoutTotal
+      )
+
+      setPaymentReference(
+        intent.reference || ''
+      )
+
+      setMayaEnabled(
+        Boolean(
+          intent.paymentMethods?.includes(
+            'paymaya'
+          )
+        )
+      )
+
+      const publicAuthorization =
+        `Basic ${btoa(`${publicKey}:`)}`
+
+      /*
+       * 2. Create a QR Ph Payment Method
+       * using the browser-safe PayMongo
+       * public key.
+       */
+      const paymentMethodResponse =
+        await fetch(
+          'https://api.paymongo.com/v1/payment_methods',
+          {
+            method: 'POST',
+            headers: {
+              Authorization:
+                publicAuthorization,
+              'Content-Type':
+                'application/json',
+              Accept:
+                'application/json',
+            },
+            body: JSON.stringify({
+              data: {
+                attributes: {
+                  type: 'qrph',
+                  expiry_seconds:
+                    QR_PH_EXPIRY_SECONDS,
+
+                  /*
+                   * Pass the checkout customer to PayMongo as
+                   * Payment Method billing information.
+                   *
+                   * This billing object is copied to the Payment
+                   * resource created after the Payment Method is
+                   * attached to the Payment Intent.
+                   */
+                  billing: {
+                    name:
+                      formData.name.trim(),
+                    email:
+                      formData.email.trim(),
+                    phone:
+                      formData.phone.trim(),
+                    address: {
+                      line1:
+                        formData.address.trim(),
+                      country:
+                        'PH',
+                    },
+                  },
+                },
+              },
+            }),
+          }
+        )
+
+      const paymentMethod =
+        (await paymentMethodResponse
+          .json()
+          .catch(() => null)) as
+          | PayMongoPaymentMethodResponse
+          | null
+
+      const paymentMethodId =
+        paymentMethod?.data?.id
+
+      if (
+        !paymentMethodResponse.ok ||
+        !paymentMethodId
+      ) {
+        throw new Error(
+          paymentMethod
+            ?.errors?.[0]
+            ?.detail ||
+            'Unable to create QR Ph payment method.'
+        )
+      }
+
+      /*
+       * 3. Attach the QR Ph Payment Method
+       * to the Payment Intent.
+       */
+      const attachResponse =
+        await fetch(
+          `https://api.paymongo.com/v1/payment_intents/${intent.paymentIntentId}/attach`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization:
+                publicAuthorization,
+              'Content-Type':
+                'application/json',
+              Accept:
+                'application/json',
+            },
+            body: JSON.stringify({
+              data: {
+                attributes: {
+                  payment_method:
+                    paymentMethodId,
+                  client_key:
+                    intent.clientKey,
+                },
+              },
+            }),
+          }
+        )
+
+      const attachedIntent =
+        (await attachResponse
+          .json()
+          .catch(() => null)) as
+          | PayMongoAttachResponse
+          | null
+
+      if (!attachResponse.ok) {
+        throw new Error(
+          attachedIntent
+            ?.errors?.[0]
+            ?.detail ||
+            'Unable to generate QR Ph code.'
+        )
+      }
+
+      const imageUrl =
+        attachedIntent
+          ?.data
+          ?.attributes
+          ?.next_action
+          ?.code
+          ?.image_url
+
+      if (!imageUrl) {
+        console.error(
+          'PayMongo attach response:',
+          attachedIntent
+        )
+
+        throw new Error(
+          'PayMongo did not return a QR Ph image.'
+        )
+      }
+
+      /*
+       * PayMongo starts QR Ph expiry when the Payment Method
+       * is attached. We set the same 30-minute window locally
+       * immediately after a successful attach response.
+       */
+      setQrExpiresAt(
+        Date.now() +
+          QR_PH_EXPIRY_SECONDS * 1000
+      )
+
+      const discoveredTestUrl =
+        findStringProperty(
+          attachedIntent,
+          'test_url'
+        ) || ''
+
+      setTestPaymentUrl(
+        discoveredTestUrl
+      )
+      setPaymentStatus(
+        'waiting'
+      )
+      setQrCodeImage(imageUrl)
+    } catch (error) {
+      console.error(
+        'QR Ph checkout failed:',
+        error
+      )
+
+      setPaymentError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to generate QR Ph payment.'
+      )
+    } finally {
+      setIsCheckingOut(false)
+    }
+  }
+
+  /*
+   * ============================
    * SUCCESS SCREEN
    * ============================
    */
@@ -513,7 +1465,7 @@ export default function CheckoutPage() {
           </h1>
 
           <p className="mx-auto mb-10 max-w-2xl text-center text-gray-600">
-            Enter your delivery information, review your cart, and send your pre-order.
+            Enter your delivery information, review your cart, then send a pre-order or pay securely with PayMongo.
           </p>
 
           <div className="grid gap-8 lg:grid-cols-2">
@@ -527,6 +1479,7 @@ export default function CheckoutPage() {
               </h2>
 
               <form
+                ref={checkoutFormRef}
                 onSubmit={
                   handleSubmit
                 }
@@ -661,27 +1614,48 @@ export default function CheckoutPage() {
                   />
                 </div>
 
-                {/* SEND PRE-ORDER */}
+                {/* CHECKOUT ACTIONS */}
 
-                <button
-                  type="submit"
-                  disabled={
-                    isSending
-                  }
-                  className={`flex w-full items-center justify-center gap-2 rounded-lg py-3 font-semibold text-white shadow-md transition-all ${
-                    isSending
-                      ? 'cursor-wait bg-forest-500'
-                      : 'bg-forest-600 hover:bg-forest-700'
-                  }`}
-                >
-                  <Send
-                    size={18}
-                  />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="submit"
+                    disabled={
+                      isSending ||
+                      isCheckingOut
+                    }
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-forest-600 bg-white py-3 font-semibold text-forest-700 shadow-sm transition-all hover:bg-forest-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Send
+                      size={18}
+                    />
 
-                  {isSending
-                    ? 'Sending...'
-                    : 'Send Pre-order'}
-                </button>
+                    Send Pre-order
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={
+                      handlePayMongoCheckout
+                    }
+                    disabled={
+                      isCheckingOut ||
+                      isSending
+                    }
+                    className={`flex w-full items-center justify-center gap-2 rounded-lg py-3 font-semibold text-white shadow-md transition-all ${
+                      isCheckingOut
+                        ? 'cursor-wait bg-forest-500'
+                        : 'bg-forest-600 hover:bg-forest-700'
+                    }`}
+                  >
+                    <CreditCard
+                      size={18}
+                    />
+
+                    {isCheckingOut
+                      ? 'Preparing...'
+                      : 'Checkout Now'}
+                  </button>
+                </div>
 
                 {sendError && (
                   <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -835,39 +1809,173 @@ export default function CheckoutPage() {
 
               </div>
 
+              {/* COUPON */}
+
+              <div className="border-t border-gray-200 pt-4">
+                <div className="rounded-xl border border-[#e8ddc8] bg-[#fffdf8] p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-forest-900">
+                        Coupon code
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Applied securely before PayMongo payment.
+                      </p>
+                    </div>
+
+                    {appliedCoupon && (
+                      <button
+                        type="button"
+                        onClick={removeCoupon}
+                        className="text-xs font-semibold text-red-600 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      value={couponInput}
+                      onChange={(event) => {
+                        setCouponInput(
+                          event.target.value.toUpperCase()
+                        )
+                        if (couponError) {
+                          setCouponError('')
+                        }
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault()
+                          if (!appliedCoupon) {
+                            void handleApplyCoupon()
+                          }
+                        }
+                      }}
+                      disabled={
+                        isApplyingCoupon ||
+                        Boolean(appliedCoupon)
+                      }
+                      placeholder="VERDE10"
+                      autoCapitalize="characters"
+                      className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold uppercase tracking-[.08em] outline-none transition focus:border-forest-500 focus:ring-2 focus:ring-forest-100 disabled:bg-gray-50"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => void handleApplyCoupon()}
+                      disabled={
+                        isApplyingCoupon ||
+                        Boolean(appliedCoupon) ||
+                        !couponInput.trim()
+                      }
+                      className="rounded-lg bg-forest-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-forest-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isApplyingCoupon
+                        ? 'Checking...'
+                        : appliedCoupon
+                          ? 'Applied'
+                          : 'Apply'}
+                    </button>
+                  </div>
+
+                  {appliedCoupon && (
+                    <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-forest-100 bg-forest-50 px-3 py-2.5">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[.12em] text-forest-700">
+                          {appliedCoupon.code} applied
+                        </p>
+                        <p className="mt-0.5 text-xs text-gray-600">
+                          {appliedCoupon.type === 'percentage'
+                            ? `${appliedCoupon.value}% discount`
+                            : `₱${appliedCoupon.value.toLocaleString('en-PH')} discount`}
+                        </p>
+                      </div>
+                      <span className="whitespace-nowrap text-sm font-bold text-forest-800">
+                        -₱
+                        {appliedCoupon.discountAmount.toLocaleString(
+                          'en-PH',
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                  {couponError && (
+                    <p className="mt-2 text-xs font-medium text-red-600">
+                      {couponError}
+                    </p>
+                  )}
+                </div>
+              </div>
+
               {/* TOTALS */}
 
               <div className="space-y-3 border-t border-gray-200 pt-4">
-
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>
-                    Total Items:
-                  </span>
-
+                  <span>Total Items:</span>
                   <span className="font-semibold">
                     {getCartCount()}
                   </span>
                 </div>
 
-                <div className="flex justify-between text-lg font-bold text-forest-700">
-                  <span>
-                    Total Amount:
-                  </span>
-
-                  <span>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Subtotal:</span>
+                  <span className="font-semibold">
                     ₱
-                    {getCartTotal().toLocaleString(
-                      'en-PH'
+                    {checkoutSubtotal.toLocaleString(
+                      'en-PH',
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
                     )}
                   </span>
                 </div>
 
+                {appliedCoupon && (
+                  <div className="flex justify-between text-sm text-forest-700">
+                    <span>
+                      Coupon {appliedCoupon.code}:
+                    </span>
+                    <span className="font-semibold">
+                      -₱
+                      {appliedCoupon.discountAmount.toLocaleString(
+                        'en-PH',
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex justify-between border-t border-gray-100 pt-3 text-lg font-bold text-forest-700">
+                  <span>
+                    Total Amount:
+                  </span>
+                  <span>
+                    ₱
+                    {payableTotal.toLocaleString(
+                      'en-PH',
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
+                    )}
+                  </span>
+                </div>
               </div>
 
               <div className="mt-6 rounded-lg border border-gold-200 bg-gold-50 p-4">
 
                 <p className="text-sm text-gray-700">
-                  This is a pre-order. After submission, we&apos;ll contact you with confirmation and payment instructions.
+                  Choose Send Pre-order to reserve your items without paying now, or Checkout Now to pay securely through PayMongo.
                 </p>
 
               </div>
@@ -1006,6 +2114,86 @@ export default function CheckoutPage() {
 
         </div>
       )}
+
+      <VerdePaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          if (
+            isCheckingOut ||
+            paymentStatus === 'paid'
+          ) {
+            return
+          }
+
+          setIsPaymentModalOpen(false)
+          setQrCodeImage(null)
+          setQrExpiresAt(null)
+          setPaymentReference('')
+          setPaymentTotal(null)
+          setPaymentIntentId('')
+          setTestPaymentUrl('')
+          setPaymentStatus('idle')
+          setPaymentError('')
+        }}
+        cart={cart}
+        totalAmount={
+          paymentTotal ?? payableTotal
+        }
+        isProcessing={isCheckingOut}
+        mayaEnabled={mayaEnabled}
+        qrCodeImage={qrCodeImage}
+        qrExpiresAt={qrExpiresAt}
+        orderReference={paymentReference}
+        paymentError={paymentError}
+        paymentStatus={paymentStatus}
+        isLocalTest={
+          isLocalhost &&
+          isPayMongoTestMode
+        }
+        testPaymentUrl={
+          isLocalhost &&
+          isPayMongoTestMode
+            ? testPaymentUrl
+            : ''
+        }
+        onPayWithQrPh={handlePayWithQrPh}
+        onPayWithMaya={() => {
+          console.log('Maya payment coming next')
+        }}
+        onBackToPaymentMethods={() => {
+          setQrCodeImage(null)
+          setQrExpiresAt(null)
+          setPaymentReference('')
+          setPaymentTotal(null)
+          setPaymentIntentId('')
+          setTestPaymentUrl('')
+          setPaymentStatus('idle')
+          setPaymentError('')
+        }}
+        onPaymentDone={() => {
+          clearCart()
+          setIsPaymentModalOpen(false)
+          setQrCodeImage(null)
+          setQrExpiresAt(null)
+          setPaymentReference('')
+          setPaymentTotal(null)
+          setPaymentIntentId('')
+          setTestPaymentUrl('')
+          setPaymentStatus('idle')
+          setPaymentError('')
+          setAppliedCoupon(null)
+          setAppliedCouponCartSignature('')
+          setCouponInput('')
+          setCouponError('')
+
+          setFormData({
+            name: '',
+            email: '',
+            phone: '',
+            address: '',
+          })
+        }}
+      />
     </>
   )
 }

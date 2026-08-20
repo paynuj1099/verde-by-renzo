@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { getIdTokenResult } from "firebase/auth";
 import {
+  CreditCard,
   MapPin,
   PackageCheck,
   Plus,
@@ -42,12 +43,14 @@ type Status =
   | "cancelled";
 type Order = {
   id: string;
+  reference?: string;
   userId: string;
   source: "account" | "guest";
   totalAmount: number;
   totalItems: number;
   status: Status;
   createdAt?: Timestamp;
+  paidAt?: Timestamp;
   items?: CartItem[];
   customer?: {
     name?: string;
@@ -58,6 +61,23 @@ type Order = {
   trackingNumber?: string;
   carrier?: string;
   trackingNote?: string;
+
+  // Payment details saved after a successful PayMongo payment.
+  subtotalAmount?: number;
+  discountAmount?: number;
+  couponCode?: string | null;
+  couponType?: "percentage" | "fixed" | null;
+  couponValue?: number | null;
+  amountInCentavos?: number;
+  currency?: string;
+  paymentStatus?: string;
+  paymentMethod?: string;
+  paymongoPaymentIntentId?: string | null;
+  paymongoPaymentId?: string | null;
+  paymongoPaymentStatus?: string | null;
+  paymongoPaymentSource?: string | null;
+  paymongoFee?: number | null;
+  paymongoNetAmount?: number | null;
 };
 const statuses: Status[] = [
   "pre-order",
@@ -90,6 +110,34 @@ const badge: Record<Status, string> = {
 const getCurrentMonthValue = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+};
+
+const getOrderReference = (order: Order) => order.reference || order.id;
+
+const formatPaymentSource = (value?: string | null) => {
+  if (!value) return "Not recorded";
+
+  const normalized = value.toLowerCase();
+
+  if (normalized === "qrph") return "QR Ph";
+  if (normalized === "paymaya" || normalized === "maya") return "Maya";
+  if (normalized === "gcash") return "GCash";
+
+  return value
+    .replaceAll("_", " ")
+    .replaceAll("-", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
+const formatCentavos = (value?: number | null) => {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+    return null;
+  }
+
+  return (Number(value) / 100).toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };
 
 export default function OrdersPage() {
@@ -294,7 +342,7 @@ export default function OrdersPage() {
             ? "shipped"
             : "updated";
     setLiveNotification(
-      `${newestLabel} • order #${newest.id.slice(0, 8).toUpperCase()} • ${statusText} • ₱${newestAmount}`,
+      `${newestLabel} • order #${getOrderReference(newest).toUpperCase()} • ${statusText} • ₱${newestAmount}`,
     );
   }, [orders]);
   useEffect(() => {
@@ -680,8 +728,9 @@ export default function OrdersPage() {
                 </button>
               )}
             </div>
-            <div className="overflow-hidden divide-y rounded-xl border border-gray-100">
-              <div className="hidden grid-cols-[42px_minmax(0,3fr)_repeat(3,minmax(0,1fr))] items-center gap-4 bg-gray-50 px-3 py-3 text-[11px] font-semibold uppercase tracking-[.12em] text-gray-500 lg:grid">
+            <div className="overflow-x-auto rounded-xl border border-gray-100">
+              <div className="min-w-[980px] divide-y">
+                <div className="grid grid-cols-[42px_minmax(360px,3fr)_150px_minmax(220px,1fr)_130px] items-center gap-4 bg-gray-50 px-3 py-3 text-[11px] font-semibold uppercase tracking-[.12em] text-gray-500">
                 <span aria-hidden="true" />
                 <span>Details</span>
                 <span>Status</span>
@@ -692,9 +741,9 @@ export default function OrdersPage() {
                 <div
                   key={key(o)}
                   data-tour={index === 0 ? "order-first-row" : undefined}
-                  className="flex items-start gap-2 px-3 py-3 transition hover:bg-forest-50 lg:grid lg:grid-cols-[42px_minmax(0,3fr)_repeat(3,minmax(0,1fr))] lg:items-center lg:gap-4"
+                  className="grid grid-cols-[42px_minmax(360px,3fr)_150px_minmax(220px,1fr)_130px] items-center gap-4 px-3 py-3 transition hover:bg-forest-50"
                 >
-                  <label className="flex flex-none cursor-pointer items-center justify-center pt-3 lg:pt-0">
+                  <label className="flex cursor-pointer items-center justify-center">
                     <input
                       type="checkbox"
                       checked={selectedOrderKeys.includes(key(o))}
@@ -713,9 +762,9 @@ export default function OrdersPage() {
                     data-tour={index === 0 ? "order-first-row-button" : undefined}
                     type="button"
                     onClick={() => setDetails(o)}
-                    className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 text-left lg:col-span-4 lg:grid-cols-[minmax(0,3fr)_repeat(3,minmax(0,1fr))] lg:gap-4"
+                    className="col-span-4 grid min-w-0 grid-cols-[minmax(360px,3fr)_150px_minmax(220px,1fr)_130px] items-center gap-4 text-left"
                   >
-                    <div className="col-span-2 flex min-w-0 items-center gap-3 lg:col-span-1">
+                    <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-forest-50 text-forest-700">
                         <PackageCheck size={18} />
                       </span>
@@ -730,22 +779,24 @@ export default function OrdersPage() {
                             </span>
                           )}
                         </div>
-                        <p className="truncate text-xs text-gray-500">
-                          #{o.id.slice(0, 12).toUpperCase()} ·{" "}
-                          {o.customer?.email || "No email"} ·{" "}
+                        <p className="text-xs text-gray-500">
+                          <span className="whitespace-nowrap font-mono">
+                            #{getOrderReference(o).toUpperCase()}
+                          </span>{" "}
+                          · {o.customer?.email || "No email"} ·{" "}
                           {o.createdAt?.toDate().toLocaleDateString("en-PH") ||
                             "Pending"}
                         </p>
                       </div>
                     </div>
-                    <div className="col-start-1 row-start-2 lg:col-auto lg:row-auto">
+                    <div>
                       <span
                         className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${badge[o.status]}`}
                       >
                         {o.status}
                       </span>
                     </div>
-                    <div className="col-start-2 row-start-2 flex min-w-0 items-center justify-end text-xs lg:col-auto lg:row-auto lg:justify-start">
+                    <div className="flex min-w-0 items-center text-xs">
                       {o.trackingNumber ? (
                         <span className="flex min-w-0 items-center gap-1 text-sm font-semibold text-forest-700">
                           <Truck size={13} className="flex-none" />
@@ -758,7 +809,7 @@ export default function OrdersPage() {
                         <span className="text-gray-400">Not added</span>
                       )}
                     </div>
-                    <div className="col-span-2 row-start-3 flex items-baseline justify-end gap-2 border-t border-gray-100 pt-2 lg:col-span-1 lg:col-start-auto lg:row-auto lg:block lg:border-0 lg:pt-0 lg:text-right">
+                    <div className="text-right">
                       <p className="font-bold text-forest-800">
                         ₱{Number(o.totalAmount || 0).toLocaleString("en-PH")}
                       </p>
@@ -769,11 +820,12 @@ export default function OrdersPage() {
                   </button>
                 </div>
               ))}
-              {!matching.length && (
-                <p className="py-12 text-center text-sm text-gray-500">
-                  No orders found for this month.
-                </p>
-              )}
+                {!matching.length && (
+                  <p className="py-12 text-center text-sm text-gray-500">
+                    No orders found for this month.
+                  </p>
+                )}
+              </div>
             </div>
             {matching.length > 0 && (
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
@@ -1180,11 +1232,11 @@ export default function OrdersPage() {
             if (e.target === e.currentTarget) setDetails(null);
           }}
         >
-          <div className="flex h-dvh w-full max-w-4xl flex-col overflow-hidden overscroll-contain bg-white shadow-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl">
+          <div className="flex h-dvh w-full max-w-7xl flex-col overflow-hidden overscroll-contain bg-white shadow-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl">
             <div className="relative flex-none border-b border-t-4 border-b-[#eee7da] border-t-gold-500 bg-white p-4 pr-14 sm:p-6 sm:pr-16">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase text-gold-600">
-                  Order #{details.id.slice(0, 8).toUpperCase()}
+                <p className="break-all font-mono text-xs font-semibold uppercase leading-5 text-gold-600">
+                  Order #{getOrderReference(details).toUpperCase()}
                 </p>
                 <h2 className="mt-1 font-serif text-2xl text-forest-950">
                   {details.customer?.name || "Customer order"}
@@ -1213,20 +1265,30 @@ export default function OrdersPage() {
                 </button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 md:grid md:grid-cols-[minmax(0,1fr)_300px] md:gap-6 md:overflow-hidden">
-              <section data-tour="order-details-items" className="min-h-0">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(250px,0.9fr)_minmax(280px,1fr)] lg:gap-5 lg:overflow-hidden">
+              {/* COLUMN 1: ORDER ITEMS */}
+              <section
+                data-tour="order-details-items"
+                className="min-h-0"
+              >
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-semibold text-forest-950">Order items</h3>
+                  <h3 className="font-semibold text-forest-950">
+                    Order items
+                  </h3>
                   <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
                     {details.items?.length || 0} products
                   </span>
                 </div>
+
                 <div
-                  className={`${(details.items?.length || 0) >= 5 ? "max-h-[42dvh] overflow-y-auto overscroll-contain pr-2 md:max-h-[420px]" : ""} space-y-3`}
+                  className={`${(details.items?.length || 0) >= 5 ? "max-h-[42dvh] overflow-y-auto overscroll-contain pr-2 lg:max-h-[520px]" : ""} space-y-3`}
                 >
                   {(details.items || []).map((item) => {
-                    const p = getProductById(item.id),
-                      src = p ? getProductImage(p, item.color) : "";
+                    const p = getProductById(item.id);
+                    const src = p
+                      ? getProductImage(p, item.color)
+                      : "";
+
                     return (
                       <div
                         key={`${item.id}-${item.color}-${item.size || ""}`}
@@ -1243,8 +1305,9 @@ export default function OrdersPage() {
                             />
                           </div>
                         ) : (
-                          <div className="h-16 w-16 rounded-lg bg-gray-100" />
+                          <div className="h-16 w-16 flex-none rounded-lg bg-gray-100" />
                         )}
+
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold">
                             {p?.name || `Product #${item.id}`}
@@ -1260,22 +1323,31 @@ export default function OrdersPage() {
                   })}
                 </div>
               </section>
-              <aside data-tour="order-details-summary" className="mt-5 space-y-4 text-sm text-gray-600 md:mt-0 md:overflow-y-auto">
+
+              {/* COLUMN 2: CUSTOMER + SHIPMENT */}
+              <aside className="mt-5 space-y-4 text-sm text-gray-600 lg:mt-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
                 <section className="rounded-xl border border-gray-100 p-4">
                   <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold-600">
                     Delivery information
                   </p>
+
                   <div className="mt-3 space-y-2">
                     <p className="break-all">
                       {details.customer?.email || "No email"}
                     </p>
                     <p>{details.customer?.phone || "No phone"}</p>
                     <p className="flex items-start gap-2">
-                      <MapPin size={15} className="mt-0.5 flex-none" />
-                      {details.customer?.address || "No address"}
+                      <MapPin
+                        size={15}
+                        className="mt-0.5 flex-none"
+                      />
+                      <span className="break-words">
+                        {details.customer?.address || "No address"}
+                      </span>
                     </p>
                   </div>
                 </section>
+
                 <section className="rounded-xl border border-forest-100 bg-forest-50 p-4">
                   <div className="mb-2 flex items-center gap-2 text-forest-700">
                     <Truck size={16} />
@@ -1283,31 +1355,42 @@ export default function OrdersPage() {
                       Shipment tracking
                     </p>
                   </div>
-                  <b className="text-forest-900">
+
+                  <b className="break-words text-forest-900">
                     {details.trackingNumber
                       ? `${details.carrier || "Carrier"} · ${details.trackingNumber}`
                       : "Not added yet"}
                   </b>
+
                   {details.trackingNote && (
-                    <p className="mt-2 text-xs">{details.trackingNote}</p>
+                    <p className="mt-2 text-xs">
+                      {details.trackingNote}
+                    </p>
                   )}
                 </section>
+
                 <section className="overflow-hidden rounded-xl border border-[#e8ddc8] bg-[#fbf8f1]">
                   <div className="border-b border-[#eee4d2] px-4 py-3">
                     <p className="text-[10px] font-bold uppercase tracking-[.16em] text-gold-700">
                       Order summary
                     </p>
                   </div>
+
                   <div className="divide-y divide-[#eee4d2] px-4">
-                    <div className="flex items-center justify-between py-3">
-                      <span className="text-xs text-gray-500">Items</span>
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-xs text-gray-500">
+                        Items
+                      </span>
                       <span className="text-sm font-semibold text-forest-900">
                         {details.totalItems || 0}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-3">
-                      <span className="text-xs text-gray-500">Order date</span>
-                      <span className="text-sm font-semibold text-forest-900">
+
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-xs text-gray-500">
+                        Order date
+                      </span>
+                      <span className="text-right text-sm font-semibold text-forest-900">
                         {details.createdAt
                           ?.toDate()
                           .toLocaleDateString("en-PH", {
@@ -1317,15 +1400,198 @@ export default function OrdersPage() {
                           }) || "Pending"}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between py-3">
-                      <span className="font-medium text-forest-800">Total</span>
+
+                    {Boolean(details.couponCode) && (
+                      <>
+                        <div className="flex items-center justify-between gap-4 py-3">
+                          <span className="text-xs text-gray-500">
+                            Subtotal
+                          </span>
+                          <span className="text-sm font-semibold text-forest-900">
+                            ₱
+                            {Number(
+                              details.subtotalAmount ??
+                                details.totalAmount ??
+                                0,
+                            ).toLocaleString("en-PH", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 py-3">
+                          <div>
+                            <span className="text-xs text-gray-500">
+                              Coupon
+                            </span>
+                            <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.1em] text-forest-700">
+                              {details.couponCode}
+                            </p>
+                          </div>
+                          <span className="text-sm font-semibold text-forest-700">
+                            -₱
+                            {Number(details.discountAmount || 0).toLocaleString(
+                              "en-PH",
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )}
+                          </span>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="font-medium text-forest-800">
+                        Total
+                      </span>
                       <span className="text-lg font-bold text-forest-900">
                         ₱
                         {Number(details.totalAmount || 0).toLocaleString(
                           "en-PH",
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          },
                         )}
                       </span>
                     </div>
+                  </div>
+                </section>
+              </aside>
+
+              {/* COLUMN 3: PAYMENT DETAILS */}
+              <aside
+                data-tour="order-details-summary"
+                className="mt-5 min-h-0 text-sm text-gray-600 lg:mt-0 lg:overflow-y-auto lg:pl-1"
+              >
+                <section className="overflow-hidden rounded-xl border border-[#e8ddc8] bg-[#fffdf8]">
+                  <div className="flex items-center gap-2 border-b border-[#eee4d2] px-4 py-3 text-forest-700">
+                    <CreditCard size={16} />
+                    <p className="text-[10px] font-bold uppercase tracking-[.16em]">
+                      Payment details
+                    </p>
+                  </div>
+
+                  <div className="divide-y divide-[#eee4d2] px-4">
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-xs text-gray-500">
+                        Payment status
+                      </span>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                          details.paymentStatus === "paid"
+                            ? "bg-[#dfe8df] text-[#24452c]"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {details.paymentStatus || "Not recorded"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-4 py-3">
+                      <span className="text-xs text-gray-500">
+                        Payment method
+                      </span>
+                      <span className="max-w-[65%] text-right text-sm font-semibold text-forest-900">
+                        {details.paymentMethod === "paymongo"
+                          ? `PayMongo · ${formatPaymentSource(details.paymongoPaymentSource)}`
+                          : details.paymentMethod || "Not recorded"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-xs text-gray-500">
+                        Amount paid
+                      </span>
+                      <span className="text-sm font-semibold text-forest-900">
+                        ₱
+                        {formatCentavos(details.amountInCentavos) ||
+                          Number(details.totalAmount || 0).toLocaleString(
+                            "en-PH",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-xs text-gray-500">
+                        Currency
+                      </span>
+                      <span className="text-sm font-semibold text-forest-900">
+                        {details.currency || "PHP"}
+                      </span>
+                    </div>
+
+                    {details.paidAt && (
+                      <div className="flex items-start justify-between gap-4 py-3">
+                        <span className="text-xs text-gray-500">
+                          Paid at
+                        </span>
+                        <span className="max-w-[65%] text-right text-sm font-semibold text-forest-900">
+                          {details.paidAt
+                            .toDate()
+                            .toLocaleString("en-PH", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })}
+                        </span>
+                      </div>
+                    )}
+
+                    {details.paymongoPaymentIntentId && (
+                      <div className="py-3">
+                        <span className="text-xs text-gray-500">
+                          Payment Intent ID
+                        </span>
+                        <p className="mt-1 break-all font-mono text-[11px] font-semibold leading-5 text-forest-900">
+                          {details.paymongoPaymentIntentId}
+                        </p>
+                      </div>
+                    )}
+
+                    {details.paymongoPaymentId && (
+                      <div className="py-3">
+                        <span className="text-xs text-gray-500">
+                          Payment ID
+                        </span>
+                        <p className="mt-1 break-all font-mono text-[11px] font-semibold leading-5 text-forest-900">
+                          {details.paymongoPaymentId}
+                        </p>
+                      </div>
+                    )}
+
+                    {details.paymongoFee !== null &&
+                      details.paymongoFee !== undefined && (
+                        <div className="flex items-center justify-between gap-4 py-3">
+                          <span className="text-xs text-gray-500">
+                            PayMongo fee
+                          </span>
+                          <span className="text-sm font-semibold text-forest-900">
+                            ₱{formatCentavos(details.paymongoFee)}
+                          </span>
+                        </div>
+                      )}
+
+                    {details.paymongoNetAmount !== null &&
+                      details.paymongoNetAmount !== undefined && (
+                        <div className="flex items-center justify-between gap-4 py-3">
+                          <span className="text-xs text-gray-500">
+                            Net amount
+                          </span>
+                          <span className="text-sm font-semibold text-forest-900">
+                            ₱{formatCentavos(details.paymongoNetAmount)}
+                          </span>
+                        </div>
+                      )}
                   </div>
                 </section>
               </aside>
@@ -1373,7 +1639,7 @@ export default function OrdersPage() {
                 <p className="text-xs font-semibold uppercase text-gold-600">
                   {bulkEditing
                     ? `${selectedOrderKeys.length} selected orders`
-                    : `Order #${editing.id.slice(0, 8).toUpperCase()}`}
+                    : `Order #${getOrderReference(editing).toUpperCase()}`}
                 </p>
                 <h2 className="font-serif text-2xl">
                   {bulkEditing ? "Bulk edit orders" : "Tracking details"}
